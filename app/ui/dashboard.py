@@ -261,9 +261,9 @@ class PriceIsRightDashboard:
             dynamic_css = gr.HTML(value=f"<style>{get_css(t)}</style>", visible=False)
 
             # ---- Global Header with theme toggle ----
-            with gr.Row(elem_id="pir-header-row"):
-                header_html = gr.HTML(value=get_header_html(t), scale=9)
-                with gr.Column(scale=1, min_width=130):
+            with gr.Row(elem_id="pir-header-row", equal_height=False):
+                header_html = gr.HTML(value=get_header_html(t), scale=10)
+                with gr.Column(scale=0, min_width=95):
                     theme_btn = gr.Button(
                         value=t["toggle_label"],
                         elem_id="theme-toggle-btn",
