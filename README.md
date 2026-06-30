@@ -1,91 +1,144 @@
 # 🎯 The Price Is Right — Multi-Agent Deal Hunter
 
-A modular, Docker-based application that uses a 7-agent AI framework to hunt for online deals, estimate true product values, and send push notifications for the best opportunities.
+![Dashboard Screenshot](assets/screenshot_dashboard.png)
+
+A modular, Docker-based application that uses a sophisticated **7-agent AI framework** to hunt for online deals, estimate true product values using RAG and fine-tuned models, and send push notifications for the best opportunities.
+
+---
 
 ## 🌟 Architecture Overview
 
-The system is built around a collaborative 7-agent framework:
+The system is built around a collaborative 7-agent framework. Each agent has a specific responsibility, working together to identify, evaluate, and notify you about great deals.
 
-1. **Scanner Agent (GPT-5)**: Monitors RSS feeds and uses Structured Outputs to identify the 5 most promising deals with clear prices and detailed descriptions.
-2. **Frontier Agent (RAG + GPT-5.1)**: Embeds product descriptions, queries a massive ChromaDB vector store for similar products, and uses GPT-5.1 to estimate prices based on that context.
-3. **Specialist Agent (Fine-tuned LLM)**: A "frontier-busting" specialist agent that calls a fine-tuned Llama-3.2-3B model (with PEFT adapter) deployed on Modal GPU infrastructure.
-4. **Neural Network Agent (DNN)**: A local deep residual neural network that provides fast, offline price regression from text features.
-5. **Ensemble Agent (Combiner)**: Orchestrates the Frontier, Specialist, and Neural Network agents, weighting their outputs (80/10/10) to produce a highly accurate combined price estimate.
-6. **Messaging Agent (Claude + Pushover)**: Uses Anthropic's Claude Sonnet to craft engaging 2-3 sentence push notifications and delivers them via the Pushover API.
-7. **Planning Agent (Orchestrator)**: The top-level controller that manages the workflow, evaluates the final discount against a configured threshold (e.g., $50), and triggers notifications.
+![Architecture Diagram](assets/architecture_diagram.png)
 
-## 🚀 Features
+### The 7 Agents
 
-- **Folding View Dashboard**: A sleek Gradio UI with collapsible accordion sections for agent status, live logs, opportunities table, and 3D RAG vector space visualisation.
-- **Dockerized Deployment**: Fully containerised with Docker Compose for easy deployment.
-- **REST API**: FastAPI backend for programmatic access to the deal-hunting workflow and RAG database.
-- **Automated Scanning**: Runs an autonomous deal-hunting cycle every 5 minutes.
-- **Live Log Streaming**: Real-time agent logs with ANSI-to-HTML color rendering in the browser.
+| # | Agent | Model / Technology | Role & Responsibility |
+|---|-------|--------------------|-----------------------|
+| 1 | **Scanner Agent** | GPT-5 (gpt-5-mini) + Structured Outputs | Monitors RSS feeds (DealNews, Slickdeals) and uses structured outputs to extract the 5 most promising deals with clear prices and descriptions. |
+| 2 | **Frontier Agent** | GPT-5.1 + ChromaDB RAG | Embeds product descriptions and queries a massive ChromaDB vector store for similar products, using GPT-5.1 to estimate prices based on that context. |
+| 3 | **Specialist Agent** | Fine-tuned Llama-3.2-3B (Modal) | A "frontier-busting" specialist agent deployed on Modal GPU infrastructure with a PEFT adapter for highly accurate, domain-specific price estimation. |
+| 4 | **Neural Network Agent** | Deep Residual DNN (PyTorch) | A local deep residual neural network that provides fast, offline price regression directly from text features. |
+| 5 | **Ensemble Agent** | Weighted Combiner | Orchestrates the Frontier, Specialist, and Neural Network agents, weighting their outputs (80/10/10) to produce a highly accurate combined price estimate. |
+| 6 | **Messaging Agent** | Claude Sonnet + Pushover | Uses Anthropic's Claude Sonnet to craft engaging 2-3 sentence push notifications and delivers them directly to your phone via the Pushover API. |
+| 7 | **Planning Agent** | GPT-5.1 Orchestrator | The top-level controller that manages the workflow, evaluates the final discount against a configured threshold (e.g., $50), and triggers notifications. |
 
-## 🛠️ Prerequisites
+---
 
-- Docker and Docker Compose
-- OpenAI API Key (for GPT-5 and GPT-5.1)
-- Anthropic API Key (for Claude message crafting)
-- Pushover Account (User Key and App Token)
-- Modal Account (optional, for the fine-tuned Specialist Agent)
+## 🚀 Key Features & Functionality
 
-## ⚙️ Setup & Configuration
+### 1. Folding View Dashboard
+A sleek, interactive Gradio UI with collapsible accordion sections:
+- **Agent Framework Status**: Real-time status of all 7 agents.
+- **Deal Opportunities Table**: View identified deals, estimated values, and discounts. Click any row to re-send a push notification.
+- **Live Agent Logs**: Real-time streaming logs with ANSI-to-HTML color rendering so you can watch the agents think and collaborate.
 
-1. Clone the repository.
-2. Copy the environment template:
-   ```bash
-   cp .env.example .env
-   ```
-3. Edit `.env` and add your API keys:
-   ```env
-   OPENAI_API_KEY=sk-...
-   ANTHROPIC_API_KEY=sk-ant-...
-   PUSHOVER_USER=...
-   PUSHOVER_TOKEN=...
-   DEAL_THRESHOLD=50
-   ```
+### 2. 3D RAG Vector Store Visualisation
+![RAG Plot](assets/screenshot_rag_plot.png)
+Explore the AI's "brain" with an interactive 3D t-SNE scatter plot of the ChromaDB product embedding space. Products are clustered by category (Electronics, Appliances, etc.), showing exactly how the Frontier Agent finds similar items for price comparison.
 
-## 🩺 Diagnostics
+### 3. Automated Push Notifications
+![Push Notification](assets/screenshot_push_notification.png)
+When the Planning Agent identifies a deal where the discount exceeds your configured threshold, the Messaging Agent uses Claude to write a compelling alert and pushes it instantly to your smartphone.
 
-Before deploying, run the diagnostic script to ensure your environment is configured correctly:
+### 4. Comprehensive REST API
+![API Docs](assets/screenshot_api_docs.png)
+A full FastAPI backend provides programmatic access to trigger runs, query the RAG database, and view surfaced opportunities. Complete with Swagger UI documentation.
+
+### 5. Robust Docker Deployment
+![Docker Services](assets/docker_services.png)
+Fully containerised architecture using Docker Compose, separating the Gradio UI, FastAPI backend, and ChromaDB vector store into isolated, scalable services with persistent named volumes.
+
+---
+
+## 📖 User Guide
+
+### Prerequisites
+- Docker and Docker Compose installed on your host machine.
+- **OpenAI API Key** (for Scanner and Frontier agents).
+- **Anthropic API Key** (for Claude message crafting).
+- **Pushover Account** (User Key and App Token for notifications).
+- *(Optional)* Modal Account for the fine-tuned Specialist Agent.
+
+### 1. Setup & Configuration
+
+Clone the repository and set up your environment variables:
+
+```bash
+git clone https://github.com/lalitnayyar/priceisrightcapstone.git
+cd priceisrightcapstone
+cp .env.example .env
+```
+
+Edit the `.env` file and add your keys:
+```env
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+PUSHOVER_USER=your-pushover-user-key
+PUSHOVER_TOKEN=your-pushover-app-token
+DEAL_THRESHOLD=50  # Minimum discount in USD to trigger an alert
+```
+
+### 2. Pre-Deployment Diagnostics
+
+Run the built-in diagnostic script to ensure your environment is configured correctly. It will check your `.env`, file structure, Python syntax, and Docker setup, providing a PASS/FAIL/WARN report.
 
 ```bash
 ./scripts/diagnose.sh
 ```
 
-This will test your `.env` configuration, file structure, Python syntax, and Docker setup, providing a PASS/FAIL/WARN report.
+### 3. Deployment
 
-## 🚢 Deployment
-
-Deploy the entire stack using the provided script:
+Deploy the entire stack using the provided script. This will build the Docker images, start the services, and initialise the RAG database with sample product data.
 
 ```bash
 ./scripts/deploy.sh
 ```
 
-This script will:
-1. Validate your `.env` file.
-2. Build the Docker images.
-3. Start the ChromaDB, FastAPI, and Gradio containers.
-4. Initialise the RAG database with sample product data.
+### 4. Accessing the Application
 
-### Other Scripts
+Once deployed, access the services via your browser:
 
-- `./scripts/start.sh` — Start existing containers without rebuilding.
-- `./scripts/stop.sh` — Stop all containers (use `--remove-volumes` to wipe data).
+- **Dashboard**: [http://localhost:7860](http://localhost:7860)
+- **API Server**: [http://localhost:8000](http://localhost:8000)
+- **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## 🖥️ Usage
+### 5. Managing the Services
 
-Once deployed, access the services at:
+Use the provided scripts to manage the application lifecycle:
 
-- **Dashboard**: http://localhost:7860
-- **API Server**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+- **Start existing containers**: `./scripts/start.sh`
+- **Stop all containers**: `./scripts/stop.sh`
+- **Stop and wipe all data**: `./scripts/stop.sh --remove-volumes`
+- **View live logs**: `docker compose logs -f app`
 
 ---
 
-### Disclaimer
+## 📁 Project Structure
+
+```text
+priceisrightcapstone/
+├── app/
+│   ├── agents/          # The 7 agent modules
+│   ├── core/            # Data models, RSS ingestion, RAG DB, Framework orchestrator
+│   ├── models/          # PyTorch Deep Neural Network definition
+│   ├── ui/              # Gradio folding-view dashboard
+│   ├── utils/           # Log formatting and HTML helpers
+│   ├── api.py           # FastAPI REST endpoints
+│   └── main.py          # Application entry point
+├── assets/              # Documentation screenshots and diagrams
+├── data/                # Persistent storage (memory.json, model weights)
+├── products_vectorstore/# ChromaDB persistent storage volume
+├── scripts/             # Bash scripts for deployment and diagnostics
+├── docker-compose.yml   # Docker services configuration
+├── Dockerfile           # Main application container definition
+└── requirements.txt     # Python dependencies
+```
+
+---
+
+## 📝 Disclaimer
 
 **Author**: Lalit Nayyar  
 **Email**: lalitnayyar@gmail.com  
