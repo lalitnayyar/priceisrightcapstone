@@ -2,14 +2,16 @@
 # Price Is Right — Docker Compose Configuration
 # ============================================================================
 # Services:
+#   chromadb  — ChromaDB vector database server (port 8001)
 #   app       — Main Gradio dashboard (port 7860)
 #   api       — FastAPI REST API (port 8000)
-#   chromadb  — ChromaDB vector database server (port 8001)
+#   rag-init  — One-shot RAG database initialiser
 #
 # Usage:
-#   ./scripts/deploy.sh    # Build and start all services
+#   ./scripts/deploy.sh    # Build and start all services (first time)
 #   ./scripts/start.sh     # Start existing containers
 #   ./scripts/stop.sh      # Stop all containers
+#   ./scripts/update.sh    # Pull latest code + rolling redeploy
 # ============================================================================
 
 # Note: 'version' key removed — obsolete in Docker Compose v2+ and causes warnings.
@@ -17,9 +19,21 @@ services:
 
   # --------------------------------------------------------------------------
   # ChromaDB — Vector database for RAG product embeddings
+  #
+  # FIX: The chromadb/chroma image does NOT include curl, so the previous
+  #      healthcheck using ["CMD", "curl", ...] always failed with
+  #      "executable file not found in $PATH", making the container
+  #      permanently unhealthy and blocking app + api from starting.
+  #
+  # Resolution:
+  #   1. Use CMD-SHELL with wget (available in the chroma image) instead of curl.
+  #   2. Increase start_period to 60s to give ChromaDB time to initialise its
+  #      SQLite store on first run (can take 20-40 s on slow disks).
+  #   3. Increase retries to 10 so transient slowness does not fail the check.
+  #   4. Pin to chromadb/chroma:0.5.20 for reproducibility (latest can break).
   # --------------------------------------------------------------------------
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.5.20
     container_name: price-is-right-chromadb
     restart: unless-stopped
     ports:
@@ -30,12 +44,15 @@ services:
       - IS_PERSISTENT=TRUE
       - PERSIST_DIRECTORY=/chroma/chroma
       - ANONYMIZED_TELEMETRY=FALSE
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
-      interval: 30s
+      # wget is available in the chroma image; curl is NOT.
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/api/v1/heartbeat || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 5
-      start_period: 30s
+      retries: 10
+      start_period: 60s
     networks:
       - price-is-right-net
 
@@ -61,6 +78,8 @@ services:
     environment:
       - PYTHONPATH=/app
       - CHROMA_DB_PATH=/app/products_vectorstore
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
       - MEMORY_FILE=/app/data/memory.json
       - DASHBOARD_PORT=7860
     depends_on:
@@ -68,11 +87,11 @@ services:
         condition: service_healthy
     command: ["python", "-m", "app.main", "--mode", "dashboard"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:7860/ || exit 1"]
       interval: 30s
       timeout: 15s
-      retries: 3
-      start_period: 90s
+      retries: 5
+      start_period: 120s
     networks:
       - price-is-right-net
 
@@ -96,6 +115,8 @@ services:
     environment:
       - PYTHONPATH=/app
       - CHROMA_DB_PATH=/app/products_vectorstore
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
       - MEMORY_FILE=/app/data/memory.json
       - API_PORT=8000
     depends_on:
@@ -103,10 +124,10 @@ services:
         condition: service_healthy
     command: ["python", "-m", "app.main", "--mode", "api"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 60s
     networks:
       - price-is-right-net
@@ -127,6 +148,11 @@ services:
     environment:
       - PYTHONPATH=/app
       - CHROMA_DB_PATH=/app/products_vectorstore
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+    depends_on:
+      chromadb:
+        condition: service_healthy
     command: ["python", "-m", "app.main", "--mode", "init-rag"]
     restart: "no"
     networks:

@@ -100,9 +100,16 @@ echo -e "${BLUE}[4/5] Starting services...${NC}"
 
 # Start ChromaDB first
 docker compose up -d chromadb
-echo -e "${YELLOW}Waiting for ChromaDB to be healthy...${NC}"
-timeout 60 bash -c 'until docker compose exec chromadb curl -sf http://localhost:8000/api/v1/heartbeat > /dev/null 2>&1; do sleep 2; done' || {
-    echo -e "${YELLOW}ChromaDB health check timed out; continuing anyway...${NC}"
+echo -e "${YELLOW}Waiting for ChromaDB to be healthy (up to 90 s)...${NC}"
+# NOTE: chromadb/chroma image has wget but NOT curl — use wget for the probe.
+timeout 90 bash -c '
+  until docker compose exec chromadb wget -qO- http://localhost:8000/api/v1/heartbeat > /dev/null 2>&1; do
+    echo -n "."
+    sleep 3
+  done
+  echo ""
+' || {
+    echo -e "${YELLOW}ChromaDB health probe timed out after 90 s; continuing anyway...${NC}"
 }
 
 # Start main services

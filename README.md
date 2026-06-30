@@ -34,6 +34,10 @@
    - [Pulling Latest Code & Updating](#7-pulling-latest-code--updating)
 4. [Script Reference](#-script-reference)
 5. [Docker Fixes & Known Issues Resolved](#-docker-fixes--known-issues-resolved)
+   - [Fix 1: COPY data/ build failure](#fix-1----copy-data-build-failure)
+   - [Fix 2: Obsolete version key warning](#fix-2----obsolete-version-39-warning)
+   - [Fix 3: start.sh failing on fresh clone](#fix-3----startsh-failing-on-fresh-clone)
+   - [Fix 4: ChromaDB permanently unhealthy](#fix-4----chromadb-container-permanently-unhealthy-blocks-app--api-from-starting)
 6. [Project Structure](#-project-structure)
 7. [Environment Variables Reference](#-environment-variables-reference)
 8. [Disclaimer](#-disclaimer)
@@ -381,6 +385,41 @@ This section documents the specific Docker errors that were identified and fixed
 **Root cause:** `docker compose up -d` without `--build` tries to pull a pre-existing image named `price-is-right:latest` from Docker Hub, which does not exist. On a fresh clone, the image must be built locally first.
 
 **Resolution:** `start.sh` now runs `docker compose up -d --build`, which always builds the image locally before starting containers. A `--no-build` flag is provided for subsequent starts where rebuilding is not needed (saving time).
+
+### Fix 4 — ChromaDB Container Permanently Unhealthy (blocks app & api from starting)
+
+**Error:**
+```
+✘ Container price-is-right-chromadb  Error  dependency chromadb failed to start
+dependency failed to start: container price-is-right-chromadb is unhealthy
+```
+
+**Root cause:** The `chromadb/chroma` Docker image does **not** include `curl`. The original healthcheck used:
+```yaml
+test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+```
+Because `curl` is not present in the image, every health probe exited with `executable file not found in $PATH`. After exhausting all retries (5 × 30 s = 150 s), Docker marked the container as **unhealthy**, which prevented the `app` and `api` services from starting due to their `depends_on: condition: service_healthy` constraint.
+
+**Resolution — three changes applied:**
+
+1. **Healthcheck command** — switched from `CMD curl` to `CMD-SHELL wget`, which *is* available in the chroma image:
+   ```yaml
+   healthcheck:
+     test: ["CMD-SHELL", "wget -qO- http://localhost:8000/api/v1/heartbeat || exit 1"]
+     interval: 15s
+     timeout: 10s
+     retries: 10
+     start_period: 60s
+   ```
+
+2. **Image pinned** — changed `chromadb/chroma:latest` to `chromadb/chroma:0.5.20` for reproducibility. The `latest` tag can silently introduce breaking API changes.
+
+3. **deploy.sh probe** — the inline bash wait loop in `deploy.sh` also used `curl` inside the container. Fixed to use `wget` consistently:
+   ```bash
+   docker compose exec chromadb wget -qO- http://localhost:8000/api/v1/heartbeat
+   ```
+
+> **Note:** `curl` is correctly used in the `app` and `api` healthchecks because those containers are built from `python:3.11-slim` which has `curl` installed via the `Dockerfile`.
 
 ---
 
