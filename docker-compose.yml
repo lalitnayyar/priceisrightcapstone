@@ -1,0 +1,152 @@
+# ============================================================================
+# Price Is Right — Docker Compose Configuration
+# ============================================================================
+# Services:
+#   app       — Main Gradio dashboard (port 7860)
+#   api       — FastAPI REST API (port 8000)
+#   chromadb  — ChromaDB vector database server (port 8001)
+#
+# Usage:
+#   ./scripts/deploy.sh    # Build and start all services
+#   ./scripts/start.sh     # Start existing containers
+#   ./scripts/stop.sh      # Stop all containers
+# ============================================================================
+
+version: "3.9"
+
+services:
+
+  # --------------------------------------------------------------------------
+  # ChromaDB — Vector database for RAG product embeddings
+  # --------------------------------------------------------------------------
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: price-is-right-chromadb
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - price-is-right-net
+
+  # --------------------------------------------------------------------------
+  # Main Application — Gradio Dashboard
+  # --------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: price-is-right:latest
+    container_name: price-is-right-app
+    restart: unless-stopped
+    ports:
+      - "7860:7860"
+    volumes:
+      - app_data:/app/data
+      - rag_store:/app/products_vectorstore
+      - ./app:/app/app:ro          # Mount source for development (remove in production)
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - CHROMA_DB_PATH=/app/products_vectorstore
+      - MEMORY_FILE=/app/data/memory.json
+      - DASHBOARD_PORT=7860
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    command: ["python", "-m", "app.main", "--mode", "dashboard"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
+    networks:
+      - price-is-right-net
+
+  # --------------------------------------------------------------------------
+  # API Service — FastAPI REST API
+  # --------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: price-is-right:latest
+    container_name: price-is-right-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - app_data:/app/data
+      - rag_store:/app/products_vectorstore
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - CHROMA_DB_PATH=/app/products_vectorstore
+      - MEMORY_FILE=/app/data/memory.json
+      - API_PORT=8000
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    command: ["python", "-m", "app.main", "--mode", "api"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - price-is-right-net
+
+  # --------------------------------------------------------------------------
+  # RAG Initializer — One-shot service to populate the vector store
+  # --------------------------------------------------------------------------
+  rag-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: price-is-right:latest
+    container_name: price-is-right-rag-init
+    volumes:
+      - rag_store:/app/products_vectorstore
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - CHROMA_DB_PATH=/app/products_vectorstore
+    command: ["python", "-m", "app.main", "--mode", "init-rag"]
+    restart: "no"
+    networks:
+      - price-is-right-net
+
+# ---------------------------------------------------------------------------
+# Volumes — persistent data storage
+# ---------------------------------------------------------------------------
+volumes:
+  chromadb_data:
+    name: price-is-right-chromadb-data
+  app_data:
+    name: price-is-right-app-data
+  rag_store:
+    name: price-is-right-rag-store
+
+# ---------------------------------------------------------------------------
+# Networks
+# ---------------------------------------------------------------------------
+networks:
+  price-is-right-net:
+    name: price-is-right-network
+    driver: bridge
