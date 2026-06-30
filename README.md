@@ -33,6 +33,7 @@
    - [Managing the Services](#6-managing-the-services)
    - [Pulling Latest Code & Updating](#7-pulling-latest-code--updating)
 4. [Script Reference](#-script-reference)
+   - [patch.sh — Apply all fixes](#patchsh--apply-all-docker-fixes)
 5. [Docker Fixes & Known Issues Resolved](#-docker-fixes--known-issues-resolved)
    - [Fix 1: COPY data/ build failure](#fix-1----copy-data-build-failure)
    - [Fix 2: Obsolete version key warning](#fix-2----obsolete-version-39-warning)
@@ -350,6 +351,7 @@ The update script runs **6 steps**:
 
 | Script | Purpose | Key Options |
 |--------|---------|-------------|
+| `scripts/patch.sh` | **Apply all Docker fixes automatically** | `--check`, `--no-restart` |
 | `scripts/deploy.sh` | First-time full deployment | `--no-cache`, `--skip-rag-init` |
 | `scripts/start.sh` | Start (and build) containers | `[service]`, `--no-build` |
 | `scripts/stop.sh` | Stop containers | `--remove-volumes` |
@@ -360,7 +362,38 @@ The update script runs **6 steps**:
 
 ## 🔧 Docker Fixes & Known Issues Resolved
 
-This section documents the specific Docker errors that were identified and fixed in the codebase.
+This section documents the specific Docker errors that were identified and fixed in the codebase. All fixes can be applied automatically using the **patch script**:
+
+```bash
+# Dry-run: see what needs fixing without making changes
+./scripts/patch.sh --check
+
+# Apply all fixes + rebuild + restart containers
+./scripts/patch.sh
+
+# Apply fixes only, do not restart containers
+./scripts/patch.sh --no-restart
+```
+
+The patch script is **idempotent** — it is safe to run multiple times. Each fix is checked individually; already-correct items are skipped with an `[OK]` status.
+
+### patch.sh — Apply All Docker Fixes
+
+The `scripts/patch.sh` script detects and repairs **7 categories of issues** automatically:
+
+| Fix | Issue Detected | Action Taken |
+|-----|---------------|---------------|
+| 1 | `COPY data/` in Dockerfile | Removes the line; adds `RUN mkdir -p` for runtime dirs |
+| 2 | `version:` key in docker-compose.yml | Removes the obsolete key |
+| 3 | `start.sh` missing `--build` flag | Adds `--build` to `docker compose up` |
+| 4 | ChromaDB healthcheck uses `curl` (not in image) | Replaces with `wget` |
+| 4b | `chromadb/chroma:latest` (unpinned) | Pins to `chromadb/chroma:0.5.20` |
+| 4c | `deploy.sh` wait probe uses `curl` in container | Replaces with `wget` |
+| 5 | `.env` file missing | Copies from `.env.example` |
+| 6 | `data/` or `products_vectorstore/` missing | Creates directories on host |
+| 7 | Scripts not executable | Runs `chmod +x` on all `scripts/*.sh` |
+
+After applying fixes, the script automatically rebuilds Docker images and performs a rolling restart (ChromaDB stays running to preserve data).
 
 ### Fix 1 — `COPY data/ ./data/` Build Failure
 
@@ -465,6 +498,7 @@ priceisrightcapstone/
 ├── data/                             # Runtime: memory.json, DNN weights (gitignored)
 ├── products_vectorstore/             # Runtime: ChromaDB persistent storage (gitignored)
 ├── scripts/
+│   ├── patch.sh                      # Apply all Docker fixes automatically
 │   ├── deploy.sh                     # First-time full deployment
 │   ├── start.sh                      # Start (and build) containers
 │   ├── stop.sh                       # Stop containers
