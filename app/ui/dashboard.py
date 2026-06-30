@@ -1,16 +1,16 @@
 """
-Price Is Right — Gradio Dashboard with Folding View and Settings Page.
-
+Price Is Right — Gradio Dashboard (Unified Theme Edition)
+==========================================================
 Features:
+  - Dark / Light theme toggle (top-right of header)
+  - Uniform colour scheme across all components via app.ui.theme
   - Tabbed interface: Dashboard | Settings
-  - Dashboard tab: collapsible accordion sections for each view
-  - Settings tab: live environment variable management with validation,
-    connection testing, export/import, and .env preview
-  - Live agent log stream with ANSI-to-HTML color rendering
+  - Dashboard: collapsible accordions for agents, deals, logs, RAG plot
+  - Settings: live .env management with validation and connection tests
+  - Live agent log stream with ANSI-to-HTML colour rendering
   - Opportunities table with click-to-notify functionality
   - 3D RAG vector store visualisation (t-SNE reduced embeddings)
   - Manual scan trigger and auto-scan every 5 minutes
-  - Agent status panel showing all 7 agents and their states
 """
 import logging
 import queue
@@ -25,6 +25,10 @@ from dotenv import load_dotenv
 from app.core.deal_agent_framework import DealAgentFramework
 from app.utils.log_utils import reformat, html_for
 from app.ui.settings_page import build_settings_tab
+from app.ui.theme import (
+    DARK_THEME, LIGHT_THEME, BRAND,
+    get_css, get_header_html, get_footer_html, get_agent_status_html,
+)
 
 load_dotenv(override=True)
 
@@ -32,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Logging queue handler for streaming logs to the UI
+# Logging queue handler — streams log records into the Gradio UI
 # ---------------------------------------------------------------------------
 
 class QueueHandler(logging.Handler):
@@ -62,8 +66,7 @@ def setup_logging(log_queue: queue.Queue) -> None:
 
 class PriceIsRightDashboard:
     """
-    Gradio-based dashboard with tabbed interface for the Price Is Right
-    multi-agent deal hunting framework.
+    Gradio-based dashboard with a unified dark/light design system.
 
     Tabs:
       1. Dashboard — folding accordion views for agents, deals, logs, RAG plot
@@ -88,7 +91,7 @@ class PriceIsRightDashboard:
         """Convert opportunities to a list of rows for the Gradio Dataframe."""
         return [
             [
-                opp.deal.product_description[:120] + "..."
+                opp.deal.product_description[:120] + "…"
                 if len(opp.deal.product_description) > 120
                 else opp.deal.product_description,
                 f"${opp.deal.price:.2f}",
@@ -100,64 +103,32 @@ class PriceIsRightDashboard:
             for opp in opportunities
         ]
 
-    def get_agent_status_html(self) -> str:
-        """Generate an HTML status panel showing all 7 agents."""
-        agents = [
-            ("1", "Scanner Agent",       "GPT-5 RSS Monitor",           "#00dddd"),
-            ("2", "Frontier Agent",      "RAG + GPT-5.1 Pricer",        "#0088ff"),
-            ("3", "Specialist Agent",    "Fine-tuned LLM (Modal)",       "#dd0000"),
-            ("4", "Neural Network Agent","Deep Residual DNN",            "#aa00dd"),
-            ("5", "Ensemble Agent",      "Weighted Price Combiner",      "#dddd00"),
-            ("6", "Messaging Agent",     "Pushover + Claude Notifier",   "#87CEEB"),
-            ("7", "Planning Agent",      "Workflow Orchestrator",        "#00dd00"),
-        ]
-        rows = ""
-        for num, name, role, color in agents:
-            rows += (
-                f'<tr style="border-bottom:1px solid #2a2a3a">'
-                f'<td style="padding:8px 12px;text-align:center;font-weight:bold;color:{color};font-size:1.1em">#{num}</td>'
-                f'<td style="padding:8px 12px;color:{color};font-weight:bold">{name}</td>'
-                f'<td style="padding:8px 12px;color:#aaa">{role}</td>'
-                f'<td style="padding:8px 12px;text-align:center"><span style="color:#00dd00;font-size:1.1em">●</span> <span style="color:#00dd00">Ready</span></td>'
-                f'</tr>'
-            )
-        return (
-            '<div style="background:#1a1a2e;border-radius:10px;padding:14px;margin:4px 0;border:1px solid #2a2a4a">'
-            '<h3 style="color:#ff7800;margin:0 0 12px 0;text-align:center;font-size:1.1em;letter-spacing:0.05em">'
-            '7-AGENT COLLABORATION FRAMEWORK</h3>'
-            '<table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:13px">'
-            '<thead><tr style="border-bottom:2px solid #ff7800">'
-            '<th style="padding:6px 12px;color:#ff7800;text-align:center">#</th>'
-            '<th style="padding:6px 12px;color:#ff7800;text-align:left">Agent</th>'
-            '<th style="padding:6px 12px;color:#ff7800;text-align:left">Role</th>'
-            '<th style="padding:6px 12px;color:#ff7800;text-align:center">Status</th>'
-            '</tr></thead>'
-            f'<tbody>{rows}</tbody>'
-            '</table>'
-            '</div>'
-        )
-
     # ------------------------------------------------------------------
     # Plot helpers
     # ------------------------------------------------------------------
 
-    def get_empty_plot(self) -> go.Figure:
+    def _plot_layout(self, t: dict) -> dict:
+        return dict(
+            paper_bgcolor=t["bg_surface"],
+            plot_bgcolor=t["bg_surface2"],
+            font=dict(color=t["text_primary"], family=BRAND["font_sans"]),
+        )
+
+    def get_empty_plot(self, t: dict = DARK_THEME) -> go.Figure:
         fig = go.Figure()
         fig.update_layout(
-            title="RAG Vector Store — Loading...",
+            title=dict(text="RAG Vector Store — Loading…", font=dict(color=BRAND["primary"])),
             height=420,
-            paper_bgcolor="#1a1a2e",
-            plot_bgcolor="#1a1a2e",
-            font=dict(color="#aaa"),
+            **self._plot_layout(t),
         )
         return fig
 
-    def get_rag_plot(self) -> go.Figure:
+    def get_rag_plot(self, t: dict = DARK_THEME) -> go.Figure:
         """Generate the 3D t-SNE scatter plot of the RAG vector store."""
         try:
             documents, vectors, colors = DealAgentFramework.get_plot_data(max_datapoints=800)
             if len(vectors) == 0:
-                return self.get_empty_plot()
+                return self.get_empty_plot(t)
 
             fig = go.Figure(
                 data=[
@@ -166,32 +137,36 @@ class PriceIsRightDashboard:
                         y=vectors[:, 1],
                         z=vectors[:, 2],
                         mode="markers",
-                        marker=dict(size=2, color=colors, opacity=0.7),
+                        marker=dict(size=2.5, color=colors, opacity=0.75,
+                                    line=dict(width=0)),
                         text=documents,
                         hovertemplate="<b>%{text}</b><extra></extra>",
                     )
                 ]
             )
             fig.update_layout(
-                title="RAG Vector Store — Product Embeddings (t-SNE 3D)",
+                title=dict(
+                    text="RAG Vector Store — Product Embeddings (t-SNE 3D)",
+                    font=dict(color=BRAND["primary"], size=15),
+                ),
                 scene=dict(
-                    xaxis_title="x",
-                    yaxis_title="y",
-                    zaxis_title="z",
+                    xaxis_title="x", yaxis_title="y", zaxis_title="z",
                     aspectmode="manual",
                     aspectratio=dict(x=2.2, y=2.2, z=1),
                     camera=dict(eye=dict(x=1.6, y=1.6, z=0.8)),
-                    bgcolor="#1a1a2e",
+                    bgcolor=t["bg_surface2"],
+                    xaxis=dict(gridcolor=t["border"], color=t["text_secondary"]),
+                    yaxis=dict(gridcolor=t["border"], color=t["text_secondary"]),
+                    zaxis=dict(gridcolor=t["border"], color=t["text_secondary"]),
                 ),
-                height=420,
-                margin=dict(r=5, b=1, l=5, t=40),
-                paper_bgcolor="#1a1a2e",
-                font=dict(color="#aaa"),
+                height=440,
+                margin=dict(r=5, b=1, l=5, t=50),
+                **self._plot_layout(t),
             )
             return fig
         except Exception as exc:
             logger.warning(f"Could not generate RAG plot: {exc}")
-            return self.get_empty_plot()
+            return self.get_empty_plot(t)
 
     # ------------------------------------------------------------------
     # Run workflow with live log streaming
@@ -243,44 +218,63 @@ class PriceIsRightDashboard:
             logger.warning(f"Row select notification failed: {exc}")
 
     # ------------------------------------------------------------------
+    # Theme toggle logic
+    # ------------------------------------------------------------------
+
+    def _toggle_theme(self, current_theme_id: str):
+        """Switch between dark and light themes; returns new CSS, header, footer, agent HTML, theme_id."""
+        t = LIGHT_THEME if current_theme_id == "dark" else DARK_THEME
+        return (
+            get_css(t),
+            get_header_html(t),
+            get_footer_html(t),
+            get_agent_status_html(t),
+            t["toggle_label"],
+            t["id"],
+        )
+
+    # ------------------------------------------------------------------
     # Build and launch the Gradio UI
     # ------------------------------------------------------------------
 
     def build(self) -> gr.Blocks:
-        """Construct the Gradio Blocks UI with tabbed interface."""
+        """Construct the Gradio Blocks UI with unified theme and tabbed interface."""
+
+        # Start with dark theme
+        t = DARK_THEME
+
         with gr.Blocks(
             title="The Price Is Right",
             theme=gr.themes.Base(
-                primary_hue="orange",
-                neutral_hue="slate",
+                primary_hue=gr.themes.colors.orange,
+                neutral_hue=gr.themes.colors.slate,
+                font=gr.themes.GoogleFont("Inter"),
             ),
-            css="""
-            .gradio-container { background-color: #0f0f1a !important; }
-            .gr-button-primary { background: #ff7800 !important; border-color: #ff7800 !important; color: white !important; }
-            .gr-button-primary:hover { background: #cc6000 !important; }
-            .tab-nav button { color: #87CEEB !important; font-size: 14px !important; }
-            .tab-nav button.selected { color: #ff7800 !important; border-bottom: 2px solid #ff7800 !important; }
-            h1, h2, h3 { color: #ff7800; }
-            .prose code { background: #1a1a2e; color: #87CEEB; }
-            """,
+            css=get_css(t),
         ) as ui:
-            log_data = gr.State([])
 
-            # ---- Global Header ----
-            gr.HTML("""
-            <div style="text-align:center;padding:20px 0 10px 0;background:linear-gradient(135deg,#0f0f1a,#1a1a2e);border-bottom:1px solid #ff7800">
-              <h1 style="color:#ff7800;font-size:2.2em;margin:0;letter-spacing:0.02em">🎯 The Price Is Right</h1>
-              <p style="color:#87CEEB;font-size:0.95em;margin:8px 0 0 0">
-                Autonomous 7-Agent AI Framework &nbsp;·&nbsp; RSS Deal Hunter &nbsp;·&nbsp;
-                RAG Price Estimator &nbsp;·&nbsp; Push Notifications
-              </p>
-            </div>
-            """)
+            # ---- State ----
+            log_data   = gr.State([])
+            theme_id   = gr.State(t["id"])
+
+            # ---- Dynamic CSS (updated on theme toggle) ----
+            dynamic_css = gr.HTML(value=f"<style>{get_css(t)}</style>", visible=False)
+
+            # ---- Global Header with theme toggle ----
+            with gr.Row(elem_id="pir-header-row"):
+                header_html = gr.HTML(value=get_header_html(t), scale=9)
+                with gr.Column(scale=1, min_width=130):
+                    theme_btn = gr.Button(
+                        value=t["toggle_label"],
+                        elem_id="theme-toggle-btn",
+                        variant="secondary",
+                        size="sm",
+                    )
 
             # ================================================================
             # TABBED INTERFACE
             # ================================================================
-            with gr.Tabs():
+            with gr.Tabs(elem_id="main-tabs"):
 
                 # ============================================================
                 # TAB 1: DASHBOARD
@@ -289,15 +283,17 @@ class PriceIsRightDashboard:
 
                     # ---- SECTION 1: Agent Framework Status ----
                     with gr.Accordion("⚙️ Agent Framework — 7 Collaborating Agents", open=True):
-                        agent_status = gr.HTML(value=self.get_agent_status_html())
+                        agent_status = gr.HTML(value=get_agent_status_html(t))
 
                     # ---- SECTION 2: Deal Opportunities ----
                     with gr.Accordion("💰 Deal Opportunities Found", open=True):
-                        gr.Markdown(
-                            "_Click any row to re-send a push notification for that deal._"
+                        gr.HTML(
+                            f'<p style="color:{t["text_secondary"]};font-size:13px;margin:0 0 8px 0">'
+                            f'Click any row to re-send a push notification for that deal.</p>'
                         )
                         opportunities_df = gr.Dataframe(
-                            headers=["Product Description", "Deal Price", "Estimate", "Discount", "Rating", "URL"],
+                            headers=["Product Description", "Deal Price", "Estimate",
+                                     "Discount", "Rating", "URL"],
                             wrap=True,
                             column_widths=[5, 1, 1, 1, 1, 3],
                             row_count=10,
@@ -309,38 +305,48 @@ class PriceIsRightDashboard:
                     # ---- SECTION 3: Live Agent Logs ----
                     with gr.Accordion("📋 Live Agent Logs", open=True):
                         with gr.Row():
-                            scan_btn = gr.Button("🔍 Scan for Deals Now", variant="primary", scale=1)
-                            gr.Markdown(
-                                "_Auto-scan runs every 5 minutes. Click the button for an immediate scan._",
+                            scan_btn = gr.Button(
+                                "🔍 Scan for Deals Now",
+                                variant="primary",
+                                scale=1,
+                            )
+                            gr.HTML(
+                                f'<p style="color:{t["text_secondary"]};font-size:13px;'
+                                f'padding:10px 0;margin:0">'
+                                f'Auto-scan runs every 5 minutes. Click the button for an immediate scan.</p>',
                                 scale=3,
                             )
                         logs_html = gr.HTML(value=html_for([]))
 
                     # ---- SECTION 4: RAG Vector Store Visualisation ----
                     with gr.Accordion("🧠 RAG Vector Store — Product Embeddings", open=False):
-                        gr.Markdown(
-                            "3D t-SNE visualisation of the ChromaDB product embedding space. "
-                            "Each point represents a product; colors indicate category."
+                        gr.HTML(
+                            f'<p style="color:{t["text_secondary"]};font-size:13px;margin:0 0 10px 0">'
+                            f'3D t-SNE visualisation of the ChromaDB product embedding space. '
+                            f'Each point represents a product; colours indicate category.</p>'
                         )
-                        rag_plot = gr.Plot(value=self.get_rag_plot(), show_label=False)
-                        refresh_plot_btn = gr.Button("🔄 Refresh RAG Plot", variant="secondary")
+                        rag_plot = gr.Plot(value=self.get_rag_plot(t), show_label=False)
+                        refresh_plot_btn = gr.Button(
+                            "🔄 Refresh RAG Plot",
+                            variant="secondary",
+                        )
 
-                    # ---- SECTION 5: System Info ----
+                    # ---- SECTION 5: System Configuration Reference ----
                     with gr.Accordion("ℹ️ System Configuration Reference", open=False):
                         gr.Markdown("""
-                        ### Agent Model Reference
+### Agent Model Reference
 
-                        | Agent | Model | Role |
-                        |-------|-------|------|
-                        | Scanner Agent | GPT-5 (gpt-4o-mini) | RSS deal identification via Structured Outputs |
-                        | Frontier Agent | GPT-5.1 + ChromaDB RAG | Price estimation with similar-product context |
-                        | Specialist Agent | Fine-tuned Llama-3.2-3B (Modal) | Frontier-busting specialist price estimation |
-                        | Neural Network Agent | Deep Residual DNN (local) | Fast offline price regression |
-                        | Ensemble Agent | Weighted average (80/10/10) | Combines Frontier + Specialist + DNN |
-                        | Messaging Agent | Claude Sonnet + Pushover | Crafts and delivers push notifications |
-                        | Planning Agent | GPT-5.1 (orchestrator) | Coordinates all agents, applies deal threshold |
+| Agent | Model | Role |
+|-------|-------|------|
+| Scanner Agent | GPT-5 (gpt-4o-mini) | RSS deal identification via Structured Outputs |
+| Frontier Agent | GPT-5.1 + ChromaDB RAG | Price estimation with similar-product context |
+| Specialist Agent | Fine-tuned Llama-3.2-3B (Modal) | Frontier-busting specialist price estimation |
+| Neural Network Agent | Deep Residual DNN (local) | Fast offline price regression |
+| Ensemble Agent | Weighted average (80/10/10) | Combines Frontier + Specialist + DNN |
+| Messaging Agent | Claude Sonnet + Pushover | Crafts and delivers push notifications |
+| Planning Agent | GPT-5.1 (orchestrator) | Coordinates all agents, applies deal threshold |
 
-                        > **Tip:** Go to the **⚙️ Settings** tab to configure API keys, thresholds, and all other options on the fly.
+> **Tip:** Go to the **⚙️ Settings** tab to configure API keys, thresholds, and all other options on the fly.
                         """)
 
                     # ---- Dashboard event wiring ----
@@ -362,7 +368,10 @@ class PriceIsRightDashboard:
                     )
                     opportunities_df.select(fn=self.on_row_select)
                     refresh_plot_btn.click(
-                        fn=lambda: self.get_rag_plot(),
+                        fn=lambda tid: self.get_rag_plot(
+                            LIGHT_THEME if tid == "light" else DARK_THEME
+                        ),
+                        inputs=[theme_id],
                         outputs=[rag_plot],
                     )
 
@@ -373,14 +382,23 @@ class PriceIsRightDashboard:
                     build_settings_tab()
 
             # ---- Footer ----
-            gr.HTML("""
-            <div style="text-align:center;padding:12px;border-top:1px solid #2a2a3a;margin-top:16px">
-              <span style="color:#555;font-size:12px;font-family:monospace">
-                Lalit Nayyar &nbsp;|&nbsp; lalitnayyar@gmail.com &nbsp;|&nbsp;
-                +971508320336 &nbsp;|&nbsp; +919595353336
-              </span>
-            </div>
-            """)
+            footer_html = gr.HTML(value=get_footer_html(t))
+
+            # ================================================================
+            # THEME TOGGLE — wires the button to update all themed components
+            # ================================================================
+            theme_btn.click(
+                fn=self._toggle_theme,
+                inputs=[theme_id],
+                outputs=[
+                    dynamic_css,   # updated <style> block (hidden HTML)
+                    header_html,   # header with new bg colours
+                    footer_html,   # footer with new border colour
+                    agent_status,  # agent table with new row colours
+                    theme_btn,     # button label (☀️ / 🌙)
+                    theme_id,      # state tracker
+                ],
+            )
 
         return ui
 

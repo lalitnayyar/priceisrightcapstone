@@ -135,6 +135,19 @@ echo -e "${GREEN}  ✓ Images built${NC}"
 echo ""
 
 # ---------------------------------------------------------------------------
+# Step 3b: Verify theme system is intact after pull
+# ---------------------------------------------------------------------------
+echo -e "${BLUE}[3b/6] Verifying unified theme system...${NC}"
+if [ -f "scripts/theme_patch.sh" ]; then
+    bash scripts/theme_patch.sh --check --no-restart 2>/dev/null && \
+        echo -e "  ${GREEN}✓ Theme system intact${NC}" || \
+        echo -e "  ${YELLOW}⚠ Theme check warnings — run ./scripts/theme_patch.sh for details${NC}"
+else
+    echo -e "  ${YELLOW}theme_patch.sh not found — skipping theme check${NC}"
+fi
+echo ""
+
+# ---------------------------------------------------------------------------
 # Step 4: Rolling restart — stop then start with new images
 # ---------------------------------------------------------------------------
 echo -e "${BLUE}[4/6] Performing rolling restart...${NC}"

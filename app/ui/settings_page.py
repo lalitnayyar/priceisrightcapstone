@@ -1,5 +1,7 @@
 """
-Settings Page — Live environment variable management for the Price Is Right dashboard.
+Price Is Right — Settings Page (Unified Theme Edition)
+=======================================================
+Live environment variable management for the Price Is Right dashboard.
 
 Provides a full settings UI with:
   - API Keys section (OpenAI, Anthropic, Pushover, Modal)
@@ -21,6 +23,8 @@ from typing import Dict, Tuple, Any
 
 import gradio as gr
 import requests
+
+from app.ui.theme import BRAND, DARK_THEME
 
 logger = logging.getLogger(__name__)
 
@@ -506,17 +510,23 @@ def build_settings_tab() -> None:
     """
     current_env = read_env_file()
 
-    # ---- Header ----
-    gr.HTML("""
-    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:10px;padding:18px 24px;margin-bottom:16px;border:1px solid #ff7800">
-      <h2 style="color:#ff7800;margin:0 0 6px 0;font-size:1.4em">⚙️ Settings &amp; Configuration</h2>
-      <p style="color:#87CEEB;margin:0;font-size:0.9em">
-        Configure all environment variables on the fly. Changes are saved to <code>.env</code>
-        and applied to the running process immediately — no restart required for API keys and thresholds.
-        Port changes require a container restart.
-      </p>
-    </div>
-    """)
+    # ---- Header (uses unified theme colours) ----
+    t = DARK_THEME  # default; CSS overrides handle light mode
+    gr.HTML(
+        f'<div style="background:{t["bg_surface2"]};border-radius:8px;padding:18px 24px;'
+        f'margin-bottom:16px;border:1px solid {BRAND["primary"]};'
+        f'border-left:4px solid {BRAND["primary"]}">'
+        f'<h2 style="color:{BRAND["primary"]};margin:0 0 6px 0;font-size:1.3em;'
+        f'font-family:{BRAND["font_sans"]};font-weight:700">⚙️ Settings &amp; Configuration</h2>'
+        f'<p style="color:{t["text_secondary"]};margin:0;font-size:0.88em;'
+        f'font-family:{BRAND["font_sans"]}">'
+        f'Configure all environment variables on the fly. Changes are saved to '
+        f'<code style="background:{t["bg_log"]};color:{t["text_code"]};'
+        f'padding:1px 5px;border-radius:3px">.env</code> '
+        f'and applied to the running process immediately — no restart required for API keys '
+        f'and thresholds. Port changes require a container restart.'
+        f'</p></div>'
+    )
 
     # ---- Status banner ----
     status_banner = gr.HTML(value=_status_html("", "idle"))
@@ -610,7 +620,7 @@ def build_settings_tab() -> None:
                 )
 
     # ---- Action buttons ----
-    gr.HTML("<hr style='border-color:#333;margin:20px 0'>")
+    gr.HTML(f'<hr style="border-color:{DARK_THEME["border"]};margin:20px 0">')
     with gr.Row():
         save_btn = gr.Button("💾 Save & Apply Settings", variant="primary", scale=2)
         validate_btn = gr.Button("✅ Validate Only", variant="secondary", scale=1)
@@ -713,18 +723,22 @@ def build_settings_tab() -> None:
 # ---------------------------------------------------------------------------
 
 def _status_html(message: str, status: str) -> str:
-    colors = {
-        "success": ("#00dd00", "#0a2a0a", "#00aa00"),
-        "error": ("#ff4444", "#2a0a0a", "#aa0000"),
-        "idle": ("#87CEEB", "#0a1a2a", "#336699"),
-        "test": ("#ffaa00", "#2a1a0a", "#aa6600"),
+    """Return a themed status banner HTML snippet."""
+    t = DARK_THEME
+    configs = {
+        "success": (t["dot_ready"],  "rgba(46,204,113,0.12)",  t["dot_ready"]),
+        "error":   (t["dot_error"],   "rgba(231,76,60,0.12)",   t["dot_error"]),
+        "idle":    (t["text_link"],   "rgba(52,152,219,0.10)",  BRAND["info"]),
+        "test":    (t["dot_busy"],    "rgba(243,156,18,0.12)",  t["dot_busy"]),
     }
-    text_color, bg_color, border_color = colors.get(status, colors["idle"])
+    text_color, bg_color, border_color = configs.get(status, configs["idle"])
     if not message:
         return ""
     return (
-        f'<div style="background:{bg_color};border:1px solid {border_color};border-radius:6px;'
-        f'padding:10px 14px;margin:8px 0;font-family:monospace;font-size:13px;color:{text_color}">'
+        f'<div style="background:{bg_color};border-left:4px solid {border_color};'
+        f'border:1px solid {border_color};border-radius:0 6px 6px 0;'
+        f'padding:10px 14px;margin:8px 0;'
+        f'font-family:{BRAND["font_mono"]};font-size:13px;color:{text_color}">'
         f'{message.replace(chr(10), "<br>")}'
         f'</div>'
     )

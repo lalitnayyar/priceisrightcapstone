@@ -17,6 +17,7 @@
 
 1. [Architecture Overview](#-architecture-overview)
 2. [Key Features & Functionality](#-key-features--functionality)
+   - [**NEW** Unified Colour Scheme & Dark/Light Toggle](#0-unified-colour-scheme--darklight-theme-toggle)
    - [Live Settings & Configuration Manager](#1-live-settings--configuration-manager)
    - [Folding View Dashboard](#2-folding-view-dashboard)
    - [3D RAG Vector Store Visualisation](#3-3d-rag-vector-store-visualisation)
@@ -66,6 +67,57 @@ The system is built around a collaborative 7-agent framework. Each agent has a s
 ---
 
 ## 🚀 Key Features & Functionality
+
+### 0. Unified Colour Scheme & Dark/Light Theme Toggle
+
+![Theme Toggle Comparison](assets/screenshot_theme_toggle.png)
+
+The entire application now uses a **single, professional design system** defined in `app/ui/theme.py` — a single source of truth for all colours, typography, spacing, and CSS. Both the Dashboard and Settings pages import from this module, ensuring pixel-perfect consistency across every component.
+
+| Component | Dark Theme | Light Theme |
+|-----------|-----------|-------------|
+| Page background | `#0D1117` (GitHub-dark) | `#F6F8FA` |
+| Surface / cards | `#161B22` | `#FFFFFF` |
+| Nested surface / inputs | `#1C2128` | `#F0F2F5` |
+| Brand primary (accent) | `#FF6B35` (vivid orange) | `#FF6B35` (unchanged) |
+| Secondary accent | `#4ECDC4` (teal) | `#0969DA` (GitHub blue) |
+| Primary text | `#E6EDF3` | `#1F2328` |
+| Muted text | `#8B949E` | `#57606A` |
+| Borders | `#30363D` | `#D0D7DE` |
+
+**Dark Theme Dashboard:**
+
+![Dark Theme Dashboard](assets/screenshot_dark_theme.png)
+
+*The dark theme with the `☀️ Light Mode` toggle button in the top-right corner.*
+
+**Light Theme Dashboard:**
+
+![Light Theme Dashboard](assets/screenshot_light_theme.png)
+
+*The light theme with the `🌙 Dark Mode` toggle button — same brand orange accent, clean white surfaces.*
+
+**Uniform styling applied to:**
+- Tab navigation bar (active tab highlighted with orange underline)
+- All accordion headers and inner panels
+- All buttons (primary orange, secondary gray, with hover states)
+- All text inputs, password fields, textareas, and dropdowns
+- Markdown prose, tables, and code blocks
+- The Gradio Dataframe (deal opportunities table)
+- The live log panel (always dark for ANSI colour compatibility)
+- The Plotly RAG scatter plot
+- Page header and footer
+- Status banners (success, error, warning, info)
+
+The toggle button is located in the **top-right corner of the header** and switches the entire application instantly — no page reload required.
+
+**Settings Page (Dark Theme):**
+
+![Settings Page Themed](assets/screenshot_settings_themed.png)
+
+*The Settings page with the unified dark theme applied — consistent surface colours, orange-bordered info box, dark input fields with orange focus glow, and themed status banners.*
+
+---
 
 ### 1. Live Settings & Configuration Manager
 
@@ -352,11 +404,42 @@ The update script runs **6 steps**:
 | Script | Purpose | Key Options |
 |--------|---------|-------------|
 | `scripts/patch.sh` | **Apply all Docker fixes automatically** | `--check`, `--no-restart` |
+| `scripts/theme_patch.sh` | **Apply unified colour scheme & verify theme** | `--check`, `--no-restart` |
 | `scripts/deploy.sh` | First-time full deployment | `--no-cache`, `--skip-rag-init` |
 | `scripts/start.sh` | Start (and build) containers | `[service]`, `--no-build` |
 | `scripts/stop.sh` | Stop containers | `--remove-volumes` |
-| `scripts/update.sh` | Pull latest code & redeploy | `--no-cache`, `--branch`, `--skip-rag-init`, `--hard-reset` |
+| `scripts/update.sh` | Pull latest code & redeploy (includes theme check) | `--no-cache`, `--branch`, `--skip-rag-init`, `--hard-reset` |
 | `scripts/diagnose.sh` | Pre-flight environment check | *(no options)* |
+
+### theme_patch.sh — Apply Unified Colour Scheme
+
+The `scripts/theme_patch.sh` script verifies and applies the unified design system:
+
+```bash
+# Dry-run: report all 13 theme checks without making changes
+./scripts/theme_patch.sh --check
+
+# Apply theme + rebuild app container + restart (rolling — chromadb stays running)
+./scripts/theme_patch.sh
+
+# Verify only, skip container restart
+./scripts/theme_patch.sh --no-restart
+```
+
+The script runs **13 checks** across 8 categories:
+
+| Check | What Is Verified |
+|-------|------------------|
+| 1 | `app/ui/theme.py` exists and has content |
+| 2 | `dashboard.py` imports from `app.ui.theme` |
+| 3 | `settings_page.py` imports from `app.ui.theme` |
+| 4 | Dark/Light toggle button is wired in `dashboard.py` |
+| 5 | Python syntax valid on all 3 UI files |
+| 6 | Brand primary colour is `#FF6B35` |
+| 7 | Both `DARK_THEME` and `LIGHT_THEME` are defined |
+| 8 | All 4 helper functions (`get_css`, `get_header_html`, `get_footer_html`, `get_agent_status_html`) are exported |
+
+The `update.sh` script automatically runs `theme_patch.sh --check` as **Step 3b** after every `git pull`, so theme integrity is verified on every deployment.
 
 ---
 
