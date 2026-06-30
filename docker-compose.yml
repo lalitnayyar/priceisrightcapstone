@@ -8,10 +8,11 @@
 #   rag-init  — One-shot RAG database initialiser
 #
 # Usage:
-#   ./scripts/deploy.sh    # Build and start all services (first time)
-#   ./scripts/start.sh     # Start existing containers
-#   ./scripts/stop.sh      # Stop all containers
-#   ./scripts/update.sh    # Pull latest code + rolling redeploy
+#   ./scripts/deploy.sh       # Build and start all services (first time)
+#   ./scripts/start.sh        # Start existing containers
+#   ./scripts/stop.sh         # Stop all containers
+#   ./scripts/update.sh       # Pull latest code + rolling redeploy
+#   ./scripts/chromadb_patch.sh  # Fix ChromaDB healthcheck issues
 # ============================================================================
 
 # Note: 'version' key removed — obsolete in Docker Compose v2+ and causes warnings.
@@ -20,17 +21,32 @@ services:
   # --------------------------------------------------------------------------
   # ChromaDB — Vector database for RAG product embeddings
   #
-  # FIX: The chromadb/chroma image does NOT include curl, so the previous
-  #      healthcheck using ["CMD", "curl", ...] always failed with
-  #      "executable file not found in $PATH", making the container
-  #      permanently unhealthy and blocking app + api from starting.
+  # KNOWN ISSUE (chromadb/chroma:0.5.x and later):
+  #   The official Docker Hub image is missing BOTH curl AND wget in many builds.
+  #   Using CMD-SHELL with either tool causes the healthcheck to fail immediately
+  #   with "executable file not found in $PATH", making the container permanently
+  #   unhealthy and blocking app + api from starting.
   #
-  # Resolution:
-  #   1. Use CMD-SHELL with wget (available in the chroma image) instead of curl.
-  #   2. Increase start_period to 60s to give ChromaDB time to initialise its
-  #      SQLite store on first run (can take 20-40 s on slow disks).
-  #   3. Increase retries to 10 so transient slowness does not fail the check.
-  #   4. Pin to chromadb/chroma:0.5.20 for reproducibility (latest can break).
+  # ROOT CAUSE (confirmed via GitHub issue #6855):
+  #   The CI pipeline for chromadb/chroma uses rust/Dockerfile which omits curl
+  #   from the apt-install step. wget availability is also inconsistent across
+  #   image tags.
+  #
+  # BULLETPROOF FIX APPLIED:
+  #   Use a pure Python TCP socket check — Python is ALWAYS present in the
+  #   chroma image (it runs on Python). The check:
+  #     1. Opens a TCP socket to localhost:8000 (proves the server is listening)
+  #     2. Sends a minimal HTTP GET for /api/v2/heartbeat (v2 endpoint, newer)
+  #     3. Falls back to /api/v1/heartbeat if v2 returns non-200
+  #   No curl, no wget, no apt-helper needed.
+  #
+  # ADDITIONAL RELIABILITY SETTINGS:
+  #   - start_period: 90s  — ChromaDB initialises its SQLite store on first run
+  #                          which can take 30-60 s on slow disks or cold starts
+  #   - interval: 20s      — Check every 20 s (not too aggressive)
+  #   - retries: 15        — Allow up to 15 failures before marking unhealthy
+  #                          (15 × 20s = 5 min total tolerance window)
+  #   - timeout: 15s       — Give the Python probe time to complete
   # --------------------------------------------------------------------------
   chromadb:
     image: chromadb/chroma:0.5.20
@@ -47,12 +63,33 @@ services:
       - CHROMA_SERVER_HOST=0.0.0.0
       - CHROMA_SERVER_HTTP_PORT=8000
     healthcheck:
-      # wget is available in the chroma image; curl is NOT.
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/api/v1/heartbeat || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+      # Pure Python TCP + HTTP probe — works regardless of curl/wget availability.
+      # Tries /api/v2/heartbeat first (chroma >= 0.5), falls back to /api/v1/heartbeat.
+      test:
+        - "CMD-SHELL"
+        - |
+          python3 -c "
+          import socket, sys
+          try:
+              s = socket.create_connection(('localhost', 8000), timeout=10)
+              s.sendall(b'GET /api/v2/heartbeat HTTP/1.0\r\nHost: localhost\r\n\r\n')
+              r = s.recv(256).decode('utf-8', errors='ignore')
+              s.close()
+              if '200' in r or 'nanosecond' in r.lower():
+                  sys.exit(0)
+              # fallback: try v1
+              s2 = socket.create_connection(('localhost', 8000), timeout=10)
+              s2.sendall(b'GET /api/v1/heartbeat HTTP/1.0\r\nHost: localhost\r\n\r\n')
+              r2 = s2.recv(256).decode('utf-8', errors='ignore')
+              s2.close()
+              sys.exit(0 if ('200' in r2 or 'nanosecond' in r2.lower()) else 1)
+          except Exception as e:
+              sys.exit(1)
+          "
+      interval: 20s
+      timeout: 15s
+      retries: 15
+      start_period: 90s
     networks:
       - price-is-right-net
 

@@ -35,11 +35,13 @@
    - [Pulling Latest Code & Updating](#7-pulling-latest-code--updating)
 4. [Script Reference](#-script-reference)
    - [patch.sh — Apply all fixes](#patchsh--apply-all-docker-fixes)
+   - [chromadb_patch.sh — ChromaDB-specific fix & diagnostics](#chromadb_patchsh--chromadb-specific-fix--diagnostics)
 5. [Docker Fixes & Known Issues Resolved](#-docker-fixes--known-issues-resolved)
    - [Fix 1: COPY data/ build failure](#fix-1----copy-data-build-failure)
    - [Fix 2: Obsolete version key warning](#fix-2----obsolete-version-39-warning)
    - [Fix 3: start.sh failing on fresh clone](#fix-3----startsh-failing-on-fresh-clone)
-   - [Fix 4: ChromaDB permanently unhealthy](#fix-4----chromadb-container-permanently-unhealthy-blocks-app--api-from-starting)
+   - [Fix 4: ChromaDB permanently unhealthy (wget)](#fix-4----chromadb-container-permanently-unhealthy-blocks-app--api-from-starting)
+   - [Fix 5: ChromaDB unhealthy — wget also missing (Python TCP probe)](#fix-5----chromadb-still-unhealthy-wget-also-absent-in-many-builds)
 6. [Project Structure](#-project-structure)
 7. [Environment Variables Reference](#-environment-variables-reference)
 8. [Disclaimer](#-disclaimer)
@@ -404,6 +406,7 @@ The update script runs **6 steps**:
 | Script | Purpose | Key Options |
 |--------|---------|-------------|
 | `scripts/patch.sh` | **Apply all Docker fixes automatically** | `--check`, `--no-restart` |
+| `scripts/chromadb_patch.sh` | **ChromaDB-specific diagnostics + Python TCP probe fix** | `--check`, `--no-restart`, `--force` |
 | `scripts/theme_patch.sh` | **Apply unified colour scheme & verify theme** | `--check`, `--no-restart` |
 | `scripts/deploy.sh` | First-time full deployment | `--no-cache`, `--skip-rag-init` |
 | `scripts/start.sh` | Start (and build) containers | `[service]`, `--no-build` |
@@ -536,6 +539,94 @@ Because `curl` is not present in the image, every health probe exited with `exec
    ```
 
 > **Note:** `curl` is correctly used in the `app` and `api` healthchecks because those containers are built from `python:3.11-slim` which has `curl` installed via the `Dockerfile`.
+
+### Fix 5 — ChromaDB Still Unhealthy: `wget` Also Absent in Many Builds
+
+**Error (same as Fix 4 but after applying the wget fix):**
+```
+✘ Container price-is-right-chromadb  Error  dependency chromadb failed to start
+dependency failed to start: container price-is-right-chromadb is unhealthy
+```
+
+**Root cause (confirmed via GitHub issue [chroma-core/chroma#6855](https://github.com/chroma-core/chroma/issues/6855)):**
+The `chromadb/chroma` Docker Hub image is built from `rust/Dockerfile` in the CI pipeline, which omits `curl` from the `apt-install` step. `wget` availability is **also inconsistent** across image tags — many `0.5.x` builds do not include it either. Both tools are unreliable probes for this image.
+
+Additionally, the ChromaDB API endpoint changed from `/api/v1/heartbeat` to `/api/v2/heartbeat` in newer versions, so even a working `wget` probe may get a 404 response.
+
+**Resolution — bulletproof Python TCP probe:**
+
+Python 3 is **always** present in the `chromadb/chroma` image (ChromaDB is a Python application). The healthcheck now uses a pure Python socket probe that:
+1. Opens a raw TCP connection to `localhost:8000` — proves the server is listening
+2. Sends a minimal HTTP GET for `/api/v2/heartbeat` (chroma >= 0.5)
+3. Falls back to `/api/v1/heartbeat` if v2 does not return a 200 response
+4. Requires **no external tools** — no curl, no wget, no apt-helper
+
+```yaml
+healthcheck:
+  test:
+    - "CMD-SHELL"
+    - |
+      python3 -c "
+      import socket, sys
+      def probe(path):
+          try:
+              s = socket.create_connection(('localhost', 8000), timeout=10)
+              s.sendall(('GET ' + path + ' HTTP/1.0\r\nHost: localhost\r\n\r\n').encode())
+              r = s.recv(512).decode('utf-8', errors='ignore')
+              s.close()
+              return '200' in r or 'nanosecond' in r.lower() or 'heartbeat' in r.lower()
+          except:
+              return False
+      if probe('/api/v2/heartbeat') or probe('/api/v1/heartbeat'):
+          sys.exit(0)
+      sys.exit(1)
+      "
+  interval: 20s
+  timeout: 15s
+  retries: 15
+  start_period: 90s
+```
+
+**Additional reliability improvements:**
+- `start_period: 90s` — ChromaDB initialises its SQLite store on first run, which can take 30–60 s on slow disks
+- `retries: 15` — 15 × 20 s = **5-minute tolerance window** before marking unhealthy
+- `deploy.sh` wait loop also updated to use the same Python TCP probe
+
+**Dedicated patch script:**
+
+```bash
+# Diagnose ChromaDB issues (dry-run, no changes)
+./scripts/chromadb_patch.sh --check
+
+# Apply Python TCP probe fix + restart ChromaDB + verify healthy
+./scripts/chromadb_patch.sh
+
+# Apply fixes but skip container restart
+./scripts/chromadb_patch.sh --no-restart
+
+# Force re-apply even if already patched
+./scripts/chromadb_patch.sh --force
+```
+
+The `chromadb_patch.sh` script runs **6 diagnostic sections**:
+
+| Section | What It Checks / Does |
+|---------|----------------------|
+| 1 | Environment — docker compose available, files present |
+| 2 | Container diagnostics — running status, probes curl/wget/python3/nc availability |
+| 3 | Tests `/api/v2/heartbeat` and `/api/v1/heartbeat` endpoints directly |
+| 4 | Audits `docker-compose.yml` healthcheck type and `start_period` value |
+| 5 | Audits `scripts/deploy.sh` probe type |
+| 6 | Applies all fixes, restarts ChromaDB, waits for healthy, starts app + api |
+
+### chromadb_patch.sh — ChromaDB-Specific Fix & Diagnostics
+
+```bash
+./scripts/chromadb_patch.sh --check     # Dry-run: full 6-section diagnostic report
+./scripts/chromadb_patch.sh             # Apply all fixes + rolling restart
+./scripts/chromadb_patch.sh --no-restart  # Fix files only, skip restart
+./scripts/chromadb_patch.sh --force     # Re-apply even if already patched
+```
 
 ---
 
