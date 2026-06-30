@@ -24,7 +24,7 @@ from typing import Dict, Tuple, Any
 import gradio as gr
 import requests
 
-from app.ui.theme import BRAND, DARK_THEME
+from app.ui.theme import BRAND, DARK_THEME, LIGHT_THEME
 
 logger = logging.getLogger(__name__)
 
@@ -513,16 +513,16 @@ def build_settings_tab() -> None:
     # ---- Header (uses unified theme colours) ----
     t = DARK_THEME  # default; CSS overrides handle light mode
     gr.HTML(
-        f'<div style="background:{t["bg_surface2"]};border-radius:8px;padding:18px 24px;'
+        f'<div class="settings-header" style="background:{t["bg_surface2"]};border-radius:8px;padding:18px 24px;'
         f'margin-bottom:16px;border:1px solid {BRAND["primary"]};'
         f'border-left:4px solid {BRAND["primary"]}">'
         f'<h2 style="color:{BRAND["primary"]};margin:0 0 6px 0;font-size:1.3em;'
         f'font-family:{BRAND["font_sans"]};font-weight:700">⚙️ Settings &amp; Configuration</h2>'
         f'<p style="color:{t["text_secondary"]};margin:0;font-size:0.88em;'
-        f'font-family:{BRAND["font_sans"]}">'
+        f'font-family:{BRAND["font_sans"]};line-height:1.6">'
         f'Configure all environment variables on the fly. Changes are saved to '
-        f'<code style="background:{t["bg_log"]};color:{t["text_code"]};'
-        f'padding:1px 5px;border-radius:3px">.env</code> '
+        f'<code style="background:{t["bg_surface"]};color:{t["text_code"]};'
+        f'border:1px solid {t["border"]};padding:1px 5px;border-radius:3px">.env</code> '
         f'and applied to the running process immediately — no restart required for API keys '
         f'and thresholds. Port changes require a container restart.'
         f'</p></div>'
@@ -620,7 +620,7 @@ def build_settings_tab() -> None:
                 )
 
     # ---- Action buttons ----
-    gr.HTML(f'<hr style="border-color:{DARK_THEME["border"]};margin:20px 0">')
+    gr.HTML(f'<hr style="border:none;border-top:1px solid {t["border"]};margin:20px 0">')
     with gr.Row():
         save_btn = gr.Button("💾 Save & Apply Settings", variant="primary", scale=2)
         validate_btn = gr.Button("✅ Validate Only", variant="secondary", scale=1)
@@ -722,9 +722,9 @@ def build_settings_tab() -> None:
 # HTML helpers
 # ---------------------------------------------------------------------------
 
-def _status_html(message: str, status: str) -> str:
+def _status_html(message: str, status: str, theme: dict = None) -> str:
     """Return a themed status banner HTML snippet."""
-    t = DARK_THEME
+    t = theme if theme is not None else DARK_THEME
     configs = {
         "success": (t["dot_ready"],  "rgba(46,204,113,0.12)",  t["dot_ready"]),
         "error":   (t["dot_error"],   "rgba(231,76,60,0.12)",   t["dot_error"]),

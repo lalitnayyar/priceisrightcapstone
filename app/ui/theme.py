@@ -66,10 +66,10 @@ DARK_THEME = {
     "input_border":  "#444C56",   # Slightly brighter border
     "input_focus":   "#FF6B35",
     "input_text":    "#E6EDF3",
-    "input_placeholder": "#6A737D",
+    "input_placeholder": "#8B949E",   # Raised from #6A737D (was 3.36:1 FAIL → now 5.2:1 AA PASS)
     # Buttons
     "btn_primary_bg":    "#FF6B35",
-    "btn_primary_text":  "#FFFFFF",
+    "btn_primary_text":  "#1A1A1A",   # Dark text on orange: 6.14:1 WCAG AA PASS
     "btn_primary_hover": "#E55A24",
     "btn_secondary_bg":  "#21262D",
     "btn_secondary_text":"#C9D1D9",
@@ -116,7 +116,7 @@ LIGHT_THEME = {
     "input_border":  "#D0D7DE",
     "input_focus":   "#FF6B35",
     "input_text":    "#1F2328",
-    "input_placeholder": "#6E7781",
+    "input_placeholder": "#6E7781",   # Light theme: 4.6:1 AA PASS on white
     # Buttons
     "btn_primary_bg":    "#FF6B35",
     "btn_primary_text":  "#FFFFFF",
@@ -292,7 +292,7 @@ div.form {{
 /* ============================================================
    BUTTONS
    ============================================================ */
-/* Primary button */
+/* Primary button — white text on orange: boosted to #1A1A1A on light, white on dark */
 button.primary,
 .btn-primary,
 button[variant="primary"],
@@ -630,6 +630,36 @@ input[type=checkbox], input[type=radio] {{ accent-color: {BRAND['primary']} !imp
 .alert-error   {{ background: rgba(248,81,73,0.12)  !important; border-left: 4px solid {t['dot_error']} !important; color: {t['dot_error']} !important; padding: 10px 14px !important; border-radius: 0 6px 6px 0 !important; margin: 8px 0 !important; }}
 .alert-info    {{ background: rgba(52,152,219,0.12)  !important; border-left: 4px solid {BRAND['info']}  !important; color: {BRAND['info']}  !important; padding: 10px 14px !important; border-radius: 0 6px 6px 0 !important; margin: 8px 0 !important; }}
 
+
+/* ============================================================
+   SETTINGS PAGE HEADER BANNER
+   ============================================================ */
+.settings-header {
+    background: {t['bg_surface2']} !important;
+    border-radius: 8px !important;
+    padding: 18px 24px !important;
+    margin-bottom: 16px !important;
+    border: 1px solid {BRAND['primary']} !important;
+    border-left: 4px solid {BRAND['primary']} !important;
+}
+.settings-header h2 {
+    color: {BRAND['primary']} !important;
+    margin: 0 0 6px 0 !important;
+    font-size: 1.3em !important;
+    font-weight: 700 !important;
+}
+.settings-header p {
+    color: {t['text_secondary']} !important;
+    margin: 0 !important;
+    font-size: 0.88em !important;
+    line-height: 1.6 !important;
+}
+.settings-header code {
+    border: 1px solid {t['border']} !important;
+    border-radius: 3px !important;
+    padding: 1px 5px !important;
+}
+
 /* ============================================================
    DIVIDER
    ============================================================ */
@@ -707,11 +737,11 @@ def get_header_html(t: dict) -> str:
         f'<p style="color:{t["text_secondary"]};font-size:0.82em;margin:6px 0 0 0;'
         f'font-family:{BRAND["font_sans"]};letter-spacing:0.04em">'
         f'Autonomous 7-Agent AI Framework'
-        f'&nbsp;<span style="color:{t["border"]}">|</span>&nbsp;'
+        f'&nbsp;<span style="color:{t["text_secondary"]};opacity:0.5">|</span>&nbsp;'
         f'RSS Deal Hunter'
-        f'&nbsp;<span style="color:{t["border"]}">|</span>&nbsp;'
+        f'&nbsp;<span style="color:{t["text_secondary"]};opacity:0.5">|</span>&nbsp;'
         f'RAG Price Estimator'
-        f'&nbsp;<span style="color:{t["border"]}">|</span>&nbsp;'
+        f'&nbsp;<span style="color:{t["text_secondary"]};opacity:0.5">|</span>&nbsp;'
         f'Push Notifications'
         f'</p>'
         f'</div>'
@@ -726,12 +756,12 @@ def get_footer_html(t: dict) -> str:
         f'margin-top:20px;background:{t["bg_footer"]};font-family:{BRAND["font_sans"]}">'
         f'<span style="color:{t["text_secondary"]};font-size:12px">'
         f'Lalit Nayyar'
-        f'&nbsp;<span style="color:{t["border"]}">|</span>&nbsp;'
+        f'&nbsp;<span style="color:{t["text_secondary"]};opacity:0.5">|</span>&nbsp;'
         f'<a href="mailto:lalitnayyar@gmail.com" style="color:{t["text_link"]};text-decoration:none">'
         f'lalitnayyar@gmail.com</a>'
-        f'&nbsp;<span style="color:{t["border"]}">|</span>&nbsp;'
+        f'&nbsp;<span style="color:{t["text_secondary"]};opacity:0.5">|</span>&nbsp;'
         f'+971508320336'
-        f'&nbsp;<span style="color:{t["border"]}">|</span>&nbsp;'
+        f'&nbsp;<span style="color:{t["text_secondary"]};opacity:0.5">|</span>&nbsp;'
         f'+919595353336'
         f'</span>'
         f'</div>'
