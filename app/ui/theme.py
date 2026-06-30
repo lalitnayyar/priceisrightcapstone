@@ -634,31 +634,31 @@ input[type=checkbox], input[type=radio] {{ accent-color: {BRAND['primary']} !imp
 /* ============================================================
    SETTINGS PAGE HEADER BANNER
    ============================================================ */
-.settings-header {
+.settings-header {{
     background: {t['bg_surface2']} !important;
     border-radius: 8px !important;
     padding: 18px 24px !important;
     margin-bottom: 16px !important;
     border: 1px solid {BRAND['primary']} !important;
     border-left: 4px solid {BRAND['primary']} !important;
-}
-.settings-header h2 {
+}}
+.settings-header h2 {{
     color: {BRAND['primary']} !important;
     margin: 0 0 6px 0 !important;
     font-size: 1.3em !important;
     font-weight: 700 !important;
-}
-.settings-header p {
+}}
+.settings-header p {{
     color: {t['text_secondary']} !important;
     margin: 0 !important;
     font-size: 0.88em !important;
     line-height: 1.6 !important;
-}
-.settings-header code {
+}}
+.settings-header code {{
     border: 1px solid {t['border']} !important;
     border-radius: 3px !important;
     padding: 1px 5px !important;
-}
+}}
 
 /* ============================================================
    DIVIDER
