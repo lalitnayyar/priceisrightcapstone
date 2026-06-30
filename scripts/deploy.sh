@@ -80,8 +80,8 @@ echo -e "${GREEN}✓ Environment configuration checked${NC}"
 # Step 2: Create data directories
 # ---------------------------------------------------------------------------
 echo -e "${BLUE}[2/5] Creating data directories...${NC}"
-mkdir -p data
-echo -e "${GREEN}✓ Data directories ready${NC}"
+mkdir -p data products_vectorstore
+echo -e "${GREEN}✓ Data directories ready (data/ and products_vectorstore/)${NC}"
 
 # ---------------------------------------------------------------------------
 # Step 3: Build Docker images
@@ -135,5 +135,6 @@ echo -e "  ${GREEN}API Docs:${NC}   http://localhost:8000/docs"
 echo -e "  ${GREEN}ChromaDB:${NC}   http://localhost:8001"
 echo ""
 echo -e "  ${YELLOW}Logs:${NC}       docker compose logs -f app"
+echo -e "  ${YELLOW}Update:${NC}     ./scripts/update.sh"
 echo -e "  ${YELLOW}Stop:${NC}       ./scripts/stop.sh"
 echo ""

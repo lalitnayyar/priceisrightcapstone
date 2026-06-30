@@ -12,8 +12,7 @@
 #   ./scripts/stop.sh      # Stop all containers
 # ============================================================================
 
-version: "3.9"
-
+# Note: 'version' key removed — obsolete in Docker Compose v2+ and causes warnings.
 services:
 
   # --------------------------------------------------------------------------
@@ -55,7 +54,8 @@ services:
     volumes:
       - app_data:/app/data
       - rag_store:/app/products_vectorstore
-      - ./app:/app/app:ro          # Mount source for development (remove in production)
+      # Uncomment the line below to mount source for live development (hot-reload):
+      # - ./app:/app/app:ro
     env_file:
       - .env
     environment:
