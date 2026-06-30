@@ -1,8 +1,11 @@
 """
-Price Is Right — Gradio Dashboard with Folding View.
+Price Is Right — Gradio Dashboard with Folding View and Settings Page.
 
 Features:
-  - Collapsible (folding) accordion sections for each view
+  - Tabbed interface: Dashboard | Settings
+  - Dashboard tab: collapsible accordion sections for each view
+  - Settings tab: live environment variable management with validation,
+    connection testing, export/import, and .env preview
   - Live agent log stream with ANSI-to-HTML color rendering
   - Opportunities table with click-to-notify functionality
   - 3D RAG vector store visualisation (t-SNE reduced embeddings)
@@ -21,8 +24,11 @@ from dotenv import load_dotenv
 
 from app.core.deal_agent_framework import DealAgentFramework
 from app.utils.log_utils import reformat, html_for
+from app.ui.settings_page import build_settings_tab
 
 load_dotenv(override=True)
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -45,9 +51,9 @@ def setup_logging(log_queue: queue.Queue) -> None:
         datefmt="%Y-%m-%d %H:%M:%S %z",
     )
     handler.setFormatter(formatter)
-    logger = logging.getLogger()
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    root_logger = logging.getLogger()
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.INFO)
 
 
 # ---------------------------------------------------------------------------
@@ -56,8 +62,12 @@ def setup_logging(log_queue: queue.Queue) -> None:
 
 class PriceIsRightDashboard:
     """
-    Gradio-based dashboard with folding accordion sections for the
-    Price Is Right multi-agent deal hunting framework.
+    Gradio-based dashboard with tabbed interface for the Price Is Right
+    multi-agent deal hunting framework.
+
+    Tabs:
+      1. Dashboard — folding accordion views for agents, deals, logs, RAG plot
+      2. Settings  — live .env management with validation and connection tests
     """
 
     SCAN_INTERVAL_SECONDS = 300  # Auto-scan every 5 minutes
@@ -78,7 +88,9 @@ class PriceIsRightDashboard:
         """Convert opportunities to a list of rows for the Gradio Dataframe."""
         return [
             [
-                opp.deal.product_description[:120] + "..." if len(opp.deal.product_description) > 120 else opp.deal.product_description,
+                opp.deal.product_description[:120] + "..."
+                if len(opp.deal.product_description) > 120
+                else opp.deal.product_description,
                 f"${opp.deal.price:.2f}",
                 f"${opp.estimate:.2f}",
                 f"${opp.discount:.2f}",
@@ -91,33 +103,34 @@ class PriceIsRightDashboard:
     def get_agent_status_html(self) -> str:
         """Generate an HTML status panel showing all 7 agents."""
         agents = [
-            ("1", "Scanner Agent", "GPT-5 RSS Monitor", Agent.CYAN, "#00dddd"),
-            ("2", "Frontier Agent", "RAG + GPT-5.1 Pricer", Agent.BLUE, "#0000ee"),
-            ("3", "Specialist Agent", "Fine-tuned LLM (Modal)", Agent.RED, "#dd0000"),
-            ("4", "Neural Network Agent", "Deep Residual DNN", Agent.MAGENTA, "#aa00dd"),
-            ("5", "Ensemble Agent", "Weighted Price Combiner", Agent.YELLOW, "#dddd00"),
-            ("6", "Messaging Agent", "Pushover + Claude Notifier", Agent.WHITE, "#87CEEB"),
-            ("7", "Planning Agent", "Workflow Orchestrator", Agent.GREEN, "#00dd00"),
+            ("1", "Scanner Agent",       "GPT-5 RSS Monitor",           "#00dddd"),
+            ("2", "Frontier Agent",      "RAG + GPT-5.1 Pricer",        "#0088ff"),
+            ("3", "Specialist Agent",    "Fine-tuned LLM (Modal)",       "#dd0000"),
+            ("4", "Neural Network Agent","Deep Residual DNN",            "#aa00dd"),
+            ("5", "Ensemble Agent",      "Weighted Price Combiner",      "#dddd00"),
+            ("6", "Messaging Agent",     "Pushover + Claude Notifier",   "#87CEEB"),
+            ("7", "Planning Agent",      "Workflow Orchestrator",        "#00dd00"),
         ]
         rows = ""
-        for num, name, role, _, color in agents:
+        for num, name, role, color in agents:
             rows += (
-                f'<tr>'
-                f'<td style="padding:6px;text-align:center;font-weight:bold;color:{color}">#{num}</td>'
-                f'<td style="padding:6px;color:{color};font-weight:bold">{name}</td>'
-                f'<td style="padding:6px;color:#aaa">{role}</td>'
-                f'<td style="padding:6px;text-align:center"><span style="color:#00dd00">●</span> Ready</td>'
+                f'<tr style="border-bottom:1px solid #2a2a3a">'
+                f'<td style="padding:8px 12px;text-align:center;font-weight:bold;color:{color};font-size:1.1em">#{num}</td>'
+                f'<td style="padding:8px 12px;color:{color};font-weight:bold">{name}</td>'
+                f'<td style="padding:8px 12px;color:#aaa">{role}</td>'
+                f'<td style="padding:8px 12px;text-align:center"><span style="color:#00dd00;font-size:1.1em">●</span> <span style="color:#00dd00">Ready</span></td>'
                 f'</tr>'
             )
         return (
-            '<div style="background:#1a1a2e;border-radius:8px;padding:12px;margin:4px 0">'
-            '<h3 style="color:#ff7800;margin:0 0 10px 0;text-align:center">7-Agent Collaboration Framework</h3>'
+            '<div style="background:#1a1a2e;border-radius:10px;padding:14px;margin:4px 0;border:1px solid #2a2a4a">'
+            '<h3 style="color:#ff7800;margin:0 0 12px 0;text-align:center;font-size:1.1em;letter-spacing:0.05em">'
+            '7-AGENT COLLABORATION FRAMEWORK</h3>'
             '<table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:13px">'
-            '<thead><tr>'
-            '<th style="padding:6px;color:#888;text-align:center">#</th>'
-            '<th style="padding:6px;color:#888">Agent</th>'
-            '<th style="padding:6px;color:#888">Role</th>'
-            '<th style="padding:6px;color:#888;text-align:center">Status</th>'
+            '<thead><tr style="border-bottom:2px solid #ff7800">'
+            '<th style="padding:6px 12px;color:#ff7800;text-align:center">#</th>'
+            '<th style="padding:6px 12px;color:#ff7800;text-align:left">Agent</th>'
+            '<th style="padding:6px 12px;color:#ff7800;text-align:left">Role</th>'
+            '<th style="padding:6px 12px;color:#ff7800;text-align:center">Status</th>'
             '</tr></thead>'
             f'<tbody>{rows}</tbody>'
             '</table>'
@@ -177,7 +190,7 @@ class PriceIsRightDashboard:
             )
             return fig
         except Exception as exc:
-            logging.warning(f"Could not generate RAG plot: {exc}")
+            logger.warning(f"Could not generate RAG plot: {exc}")
             return self.get_empty_plot()
 
     # ------------------------------------------------------------------
@@ -227,14 +240,14 @@ class PriceIsRightDashboard:
                 opportunity = opportunities[row]
                 self.get_framework().planner.messenger.alert(opportunity)
         except Exception as exc:
-            logging.warning(f"Row select notification failed: {exc}")
+            logger.warning(f"Row select notification failed: {exc}")
 
     # ------------------------------------------------------------------
     # Build and launch the Gradio UI
     # ------------------------------------------------------------------
 
     def build(self) -> gr.Blocks:
-        """Construct the Gradio Blocks UI with folding accordion sections."""
+        """Construct the Gradio Blocks UI with tabbed interface."""
         with gr.Blocks(
             title="The Price Is Right",
             theme=gr.themes.Base(
@@ -242,113 +255,132 @@ class PriceIsRightDashboard:
                 neutral_hue="slate",
             ),
             css="""
-            .gradio-container { background-color: #0f0f1a; }
-            .gr-button { background: #ff7800 !important; color: white !important; }
-            .gr-button:hover { background: #cc6000 !important; }
+            .gradio-container { background-color: #0f0f1a !important; }
+            .gr-button-primary { background: #ff7800 !important; border-color: #ff7800 !important; color: white !important; }
+            .gr-button-primary:hover { background: #cc6000 !important; }
+            .tab-nav button { color: #87CEEB !important; font-size: 14px !important; }
+            .tab-nav button.selected { color: #ff7800 !important; border-bottom: 2px solid #ff7800 !important; }
             h1, h2, h3 { color: #ff7800; }
+            .prose code { background: #1a1a2e; color: #87CEEB; }
             """,
         ) as ui:
             log_data = gr.State([])
 
-            # ---- Header ----
+            # ---- Global Header ----
             gr.HTML("""
-            <div style="text-align:center;padding:20px 0 10px 0;background:linear-gradient(135deg,#0f0f1a,#1a1a2e)">
-              <h1 style="color:#ff7800;font-size:2.2em;margin:0">🎯 The Price Is Right</h1>
-              <p style="color:#87CEEB;font-size:1em;margin:8px 0 0 0">
-                Autonomous 7-Agent AI Framework · RSS Deal Hunter · RAG Price Estimator · Push Notifications
+            <div style="text-align:center;padding:20px 0 10px 0;background:linear-gradient(135deg,#0f0f1a,#1a1a2e);border-bottom:1px solid #ff7800">
+              <h1 style="color:#ff7800;font-size:2.2em;margin:0;letter-spacing:0.02em">🎯 The Price Is Right</h1>
+              <p style="color:#87CEEB;font-size:0.95em;margin:8px 0 0 0">
+                Autonomous 7-Agent AI Framework &nbsp;·&nbsp; RSS Deal Hunter &nbsp;·&nbsp;
+                RAG Price Estimator &nbsp;·&nbsp; Push Notifications
               </p>
             </div>
             """)
 
-            # ---- SECTION 1: Agent Framework Status (folding) ----
-            with gr.Accordion("⚙️ Agent Framework — 7 Collaborating Agents", open=True):
-                agent_status = gr.HTML(value=self.get_agent_status_html())
+            # ================================================================
+            # TABBED INTERFACE
+            # ================================================================
+            with gr.Tabs():
 
-            # ---- SECTION 2: Deal Opportunities (folding) ----
-            with gr.Accordion("💰 Deal Opportunities Found", open=True):
-                gr.Markdown(
-                    "_Click any row to re-send a push notification for that deal._",
-                )
-                opportunities_df = gr.Dataframe(
-                    headers=["Product Description", "Deal Price", "Estimate", "Discount", "Rating", "URL"],
-                    wrap=True,
-                    column_widths=[5, 1, 1, 1, 1, 3],
-                    row_count=10,
-                    col_count=6,
-                    max_height=350,
-                    interactive=False,
-                )
+                # ============================================================
+                # TAB 1: DASHBOARD
+                # ============================================================
+                with gr.Tab("📊 Dashboard"):
 
-            # ---- SECTION 3: Live Agent Logs (folding) ----
-            with gr.Accordion("📋 Live Agent Logs", open=True):
-                with gr.Row():
-                    scan_btn = gr.Button("🔍 Scan for Deals Now", variant="primary", scale=1)
-                    gr.Markdown(
-                        "_Auto-scan runs every 5 minutes. Click the button for an immediate scan._",
-                        scale=3,
+                    # ---- SECTION 1: Agent Framework Status ----
+                    with gr.Accordion("⚙️ Agent Framework — 7 Collaborating Agents", open=True):
+                        agent_status = gr.HTML(value=self.get_agent_status_html())
+
+                    # ---- SECTION 2: Deal Opportunities ----
+                    with gr.Accordion("💰 Deal Opportunities Found", open=True):
+                        gr.Markdown(
+                            "_Click any row to re-send a push notification for that deal._"
+                        )
+                        opportunities_df = gr.Dataframe(
+                            headers=["Product Description", "Deal Price", "Estimate", "Discount", "Rating", "URL"],
+                            wrap=True,
+                            column_widths=[5, 1, 1, 1, 1, 3],
+                            row_count=10,
+                            col_count=6,
+                            max_height=350,
+                            interactive=False,
+                        )
+
+                    # ---- SECTION 3: Live Agent Logs ----
+                    with gr.Accordion("📋 Live Agent Logs", open=True):
+                        with gr.Row():
+                            scan_btn = gr.Button("🔍 Scan for Deals Now", variant="primary", scale=1)
+                            gr.Markdown(
+                                "_Auto-scan runs every 5 minutes. Click the button for an immediate scan._",
+                                scale=3,
+                            )
+                        logs_html = gr.HTML(value=html_for([]))
+
+                    # ---- SECTION 4: RAG Vector Store Visualisation ----
+                    with gr.Accordion("🧠 RAG Vector Store — Product Embeddings", open=False):
+                        gr.Markdown(
+                            "3D t-SNE visualisation of the ChromaDB product embedding space. "
+                            "Each point represents a product; colors indicate category."
+                        )
+                        rag_plot = gr.Plot(value=self.get_rag_plot(), show_label=False)
+                        refresh_plot_btn = gr.Button("🔄 Refresh RAG Plot", variant="secondary")
+
+                    # ---- SECTION 5: System Info ----
+                    with gr.Accordion("ℹ️ System Configuration Reference", open=False):
+                        gr.Markdown("""
+                        ### Agent Model Reference
+
+                        | Agent | Model | Role |
+                        |-------|-------|------|
+                        | Scanner Agent | GPT-5 (gpt-4o-mini) | RSS deal identification via Structured Outputs |
+                        | Frontier Agent | GPT-5.1 + ChromaDB RAG | Price estimation with similar-product context |
+                        | Specialist Agent | Fine-tuned Llama-3.2-3B (Modal) | Frontier-busting specialist price estimation |
+                        | Neural Network Agent | Deep Residual DNN (local) | Fast offline price regression |
+                        | Ensemble Agent | Weighted average (80/10/10) | Combines Frontier + Specialist + DNN |
+                        | Messaging Agent | Claude Sonnet + Pushover | Crafts and delivers push notifications |
+                        | Planning Agent | GPT-5.1 (orchestrator) | Coordinates all agents, applies deal threshold |
+
+                        > **Tip:** Go to the **⚙️ Settings** tab to configure API keys, thresholds, and all other options on the fly.
+                        """)
+
+                    # ---- Dashboard event wiring ----
+                    scan_btn.click(
+                        fn=self.run_with_logging,
+                        inputs=[log_data],
+                        outputs=[log_data, logs_html, opportunities_df],
                     )
-                logs_html = gr.HTML(value=html_for([]))
+                    ui.load(
+                        fn=self.run_with_logging,
+                        inputs=[log_data],
+                        outputs=[log_data, logs_html, opportunities_df],
+                    )
+                    timer = gr.Timer(value=self.SCAN_INTERVAL_SECONDS, active=True)
+                    timer.tick(
+                        fn=self.run_with_logging,
+                        inputs=[log_data],
+                        outputs=[log_data, logs_html, opportunities_df],
+                    )
+                    opportunities_df.select(fn=self.on_row_select)
+                    refresh_plot_btn.click(
+                        fn=lambda: self.get_rag_plot(),
+                        outputs=[rag_plot],
+                    )
 
-            # ---- SECTION 4: RAG Vector Store Visualisation (folding) ----
-            with gr.Accordion("🧠 RAG Vector Store — Product Embeddings", open=False):
-                gr.Markdown(
-                    "3D t-SNE visualisation of the ChromaDB product embedding space. "
-                    "Each point represents a product; colors indicate category."
-                )
-                rag_plot = gr.Plot(value=self.get_rag_plot(), show_label=False)
-                refresh_plot_btn = gr.Button("🔄 Refresh RAG Plot", variant="secondary")
+                # ============================================================
+                # TAB 2: SETTINGS
+                # ============================================================
+                with gr.Tab("⚙️ Settings"):
+                    build_settings_tab()
 
-            # ---- SECTION 5: Configuration Info (folding) ----
-            with gr.Accordion("ℹ️ System Configuration", open=False):
-                gr.Markdown("""
-                ### Agent Configuration
-
-                | Agent | Model | Role |
-                |-------|-------|------|
-                | Scanner Agent | GPT-5 (gpt-5-mini) | RSS deal identification via Structured Outputs |
-                | Frontier Agent | GPT-5.1 + ChromaDB RAG | Price estimation with similar-product context |
-                | Specialist Agent | Fine-tuned Llama-3.2-3B (Modal) | Frontier-busting specialist price estimation |
-                | Neural Network Agent | Deep Residual DNN (local) | Fast offline price regression |
-                | Ensemble Agent | Weighted average (80/10/10) | Combines Frontier + Specialist + DNN |
-                | Messaging Agent | Claude Sonnet + Pushover | Crafts and delivers push notifications |
-                | Planning Agent | GPT-5.1 (orchestrator) | Coordinates all agents, applies deal threshold |
-
-                ### Environment Variables
-                Set these in your `.env` file or Docker environment:
-                - `OPENAI_API_KEY` — OpenAI API key
-                - `ANTHROPIC_API_KEY` — Anthropic API key (for Claude)
-                - `PUSHOVER_USER` — Pushover user key
-                - `PUSHOVER_TOKEN` — Pushover app token
-                - `CHROMA_DB_PATH` — Path to ChromaDB store (default: `products_vectorstore`)
-                - `DEAL_THRESHOLD` — Minimum discount to trigger notification (default: 50)
-                """)
-
-            # ---- Event wiring ----
-            scan_btn.click(
-                fn=self.run_with_logging,
-                inputs=[log_data],
-                outputs=[log_data, logs_html, opportunities_df],
-            )
-
-            ui.load(
-                fn=self.run_with_logging,
-                inputs=[log_data],
-                outputs=[log_data, logs_html, opportunities_df],
-            )
-
-            timer = gr.Timer(value=self.SCAN_INTERVAL_SECONDS, active=True)
-            timer.tick(
-                fn=self.run_with_logging,
-                inputs=[log_data],
-                outputs=[log_data, logs_html, opportunities_df],
-            )
-
-            opportunities_df.select(fn=self.on_row_select)
-
-            refresh_plot_btn.click(
-                fn=lambda: self.get_rag_plot(),
-                outputs=[rag_plot],
-            )
+            # ---- Footer ----
+            gr.HTML("""
+            <div style="text-align:center;padding:12px;border-top:1px solid #2a2a3a;margin-top:16px">
+              <span style="color:#555;font-size:12px;font-family:monospace">
+                Lalit Nayyar &nbsp;|&nbsp; lalitnayyar@gmail.com &nbsp;|&nbsp;
+                +971508320336 &nbsp;|&nbsp; +919595353336
+              </span>
+            </div>
+            """)
 
         return ui
 
@@ -361,10 +393,6 @@ class PriceIsRightDashboard:
             share=share,
             inbrowser=False,
         )
-
-
-# Needed for the agent status HTML
-from app.agents.agent import Agent
 
 
 if __name__ == "__main__":

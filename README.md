@@ -1,6 +1,6 @@
 # 🎯 The Price Is Right — Multi-Agent Deal Hunter
 
-![Dashboard Screenshot](assets/screenshot_dashboard.png)
+![Tabbed Dashboard Overview](assets/screenshot_tabbed_overview.png)
 
 A modular, Docker-based application that uses a sophisticated **7-agent AI framework** to hunt for online deals, estimate true product values using RAG and fine-tuned models, and send push notifications for the best opportunities.
 
@@ -28,25 +28,36 @@ The system is built around a collaborative 7-agent framework. Each agent has a s
 
 ## 🚀 Key Features & Functionality
 
-### 1. Folding View Dashboard
+### 1. Live Settings & Configuration Manager
+![Settings - API Keys](assets/screenshot_settings_api_keys.png)
+A dedicated Settings tab allows you to manage all environment variables on the fly without touching the `.env` file directly:
+- **API Key Management**: Securely enter OpenAI, Anthropic, Pushover, and Modal keys.
+- **Connection Testing**: Instantly verify your API keys and database connections with built-in test buttons.
+- **Agent Configuration**: Adjust the deal threshold, scan interval, agent models, and ensemble weights dynamically.
+- **Import/Export**: Export your configuration to JSON (secrets are automatically redacted) or import an existing configuration.
+- **Live Application**: Changes to thresholds, models, and keys are applied to the running process immediately—no restart required!
+
+![Settings - Agent Config](assets/screenshot_settings_agent_config.png)
+
+### 2. Folding View Dashboard
 A sleek, interactive Gradio UI with collapsible accordion sections:
 - **Agent Framework Status**: Real-time status of all 7 agents.
 - **Deal Opportunities Table**: View identified deals, estimated values, and discounts. Click any row to re-send a push notification.
 - **Live Agent Logs**: Real-time streaming logs with ANSI-to-HTML color rendering so you can watch the agents think and collaborate.
 
-### 2. 3D RAG Vector Store Visualisation
+### 3. 3D RAG Vector Store Visualisation
 ![RAG Plot](assets/screenshot_rag_plot.png)
 Explore the AI's "brain" with an interactive 3D t-SNE scatter plot of the ChromaDB product embedding space. Products are clustered by category (Electronics, Appliances, etc.), showing exactly how the Frontier Agent finds similar items for price comparison.
 
-### 3. Automated Push Notifications
+### 4. Automated Push Notifications
 ![Push Notification](assets/screenshot_push_notification.png)
 When the Planning Agent identifies a deal where the discount exceeds your configured threshold, the Messaging Agent uses Claude to write a compelling alert and pushes it instantly to your smartphone.
 
-### 4. Comprehensive REST API
+### 5. Comprehensive REST API
 ![API Docs](assets/screenshot_api_docs.png)
 A full FastAPI backend provides programmatic access to trigger runs, query the RAG database, and view surfaced opportunities. Complete with Swagger UI documentation.
 
-### 5. Robust Docker Deployment
+### 6. Robust Docker Deployment
 ![Docker Services](assets/docker_services.png)
 Fully containerised architecture using Docker Compose, separating the Gradio UI, FastAPI backend, and ChromaDB vector store into isolated, scalable services with persistent named volumes.
 
@@ -71,14 +82,7 @@ cd priceisrightcapstone
 cp .env.example .env
 ```
 
-Edit the `.env` file and add your keys:
-```env
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-PUSHOVER_USER=your-pushover-user-key
-PUSHOVER_TOKEN=your-pushover-app-token
-DEAL_THRESHOLD=50  # Minimum discount in USD to trigger an alert
-```
+*Note: You can leave the API keys blank in the `.env` file and configure them later via the Settings UI.*
 
 ### 2. Pre-Deployment Diagnostics
 
@@ -100,11 +104,19 @@ Deploy the entire stack using the provided script. This will build the Docker im
 
 Once deployed, access the services via your browser:
 
-- **Dashboard**: [http://localhost:7860](http://localhost:7860)
+- **Dashboard & Settings**: [http://localhost:7860](http://localhost:7860)
 - **API Server**: [http://localhost:8000](http://localhost:8000)
 - **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### 5. Managing the Services
+### 5. Managing Settings via UI
+
+1. Open the Dashboard at `http://localhost:7860`.
+2. Click the **⚙️ Settings** tab.
+3. Enter your API keys in the **API Keys** section and click the "Test" buttons to verify they work.
+4. Adjust the **Deal Threshold** (e.g., to $100) in the **Agent Configuration** section.
+5. Click **💾 Save & Apply Settings**. The new threshold and keys are immediately active for the next scan cycle.
+
+### 6. Managing the Services
 
 Use the provided scripts to manage the application lifecycle:
 
@@ -123,7 +135,7 @@ priceisrightcapstone/
 │   ├── agents/          # The 7 agent modules
 │   ├── core/            # Data models, RSS ingestion, RAG DB, Framework orchestrator
 │   ├── models/          # PyTorch Deep Neural Network definition
-│   ├── ui/              # Gradio folding-view dashboard
+│   ├── ui/              # Gradio UI: dashboard.py and settings_page.py
 │   ├── utils/           # Log formatting and HTML helpers
 │   ├── api.py           # FastAPI REST endpoints
 │   └── main.py          # Application entry point
