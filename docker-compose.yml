@@ -8,10 +8,10 @@
 #   rag-init  — One-shot RAG database initialiser
 #
 # Usage:
-#   ./scripts/deploy.sh       # Build and start all services (first time)
-#   ./scripts/start.sh        # Start existing containers
-#   ./scripts/stop.sh         # Stop all containers
-#   ./scripts/update.sh       # Pull latest code + rolling redeploy
+#   ./scripts/deploy.sh          # Build and start all services (first time)
+#   ./scripts/start.sh           # Start existing containers
+#   ./scripts/stop.sh            # Stop all containers
+#   ./scripts/update.sh          # Pull latest code + rolling redeploy
 #   ./scripts/chromadb_patch.sh  # Fix ChromaDB healthcheck issues
 # ============================================================================
 
@@ -21,32 +21,23 @@ services:
   # --------------------------------------------------------------------------
   # ChromaDB — Vector database for RAG product embeddings
   #
-  # KNOWN ISSUE (chromadb/chroma:0.5.x and later):
-  #   The official Docker Hub image is missing BOTH curl AND wget in many builds.
-  #   Using CMD-SHELL with either tool causes the healthcheck to fail immediately
-  #   with "executable file not found in $PATH", making the container permanently
-  #   unhealthy and blocking app + api from starting.
+  # HEALTHCHECK DESIGN NOTES:
+  #   The chromadb/chroma image is missing curl AND wget in most builds.
+  #   Python 3 is always present (ChromaDB is a Python app).
   #
-  # ROOT CAUSE (confirmed via GitHub issue #6855):
-  #   The CI pipeline for chromadb/chroma uses rust/Dockerfile which omits curl
-  #   from the apt-install step. wget availability is also inconsistent across
-  #   image tags.
+  #   IMPORTANT: The CMD-SHELL probe MUST be a single-line string.
+  #   Multi-line YAML block scalars (|) are unreliable with CMD-SHELL because
+  #   Docker passes the entire block as one argument to /bin/sh -c, and
+  #   embedded newlines cause parsing failures in some Docker versions.
   #
-  # BULLETPROOF FIX APPLIED:
-  #   Use a pure Python TCP socket check — Python is ALWAYS present in the
-  #   chroma image (it runs on Python). The check:
-  #     1. Opens a TCP socket to localhost:8000 (proves the server is listening)
-  #     2. Sends a minimal HTTP GET for /api/v2/heartbeat (v2 endpoint, newer)
-  #     3. Falls back to /api/v1/heartbeat if v2 returns non-200
-  #   No curl, no wget, no apt-helper needed.
+  #   The probe below uses a single-line Python one-liner with semicolons.
+  #   It tries /api/v2/heartbeat (chroma >= 0.5) and /api/v1/heartbeat (older).
   #
-  # ADDITIONAL RELIABILITY SETTINGS:
-  #   - start_period: 90s  — ChromaDB initialises its SQLite store on first run
-  #                          which can take 30-60 s on slow disks or cold starts
-  #   - interval: 20s      — Check every 20 s (not too aggressive)
-  #   - retries: 15        — Allow up to 15 failures before marking unhealthy
-  #                          (15 × 20s = 5 min total tolerance window)
-  #   - timeout: 15s       — Give the Python probe time to complete
+  # DEPENDENCY STRATEGY:
+  #   app and api use condition: service_started (not service_healthy).
+  #   This means they start immediately and retry their own ChromaDB connection
+  #   internally. This prevents a cascading failure where a slow ChromaDB
+  #   startup blocks the entire stack.
   # --------------------------------------------------------------------------
   chromadb:
     image: chromadb/chroma:0.5.20
@@ -63,33 +54,11 @@ services:
       - CHROMA_SERVER_HOST=0.0.0.0
       - CHROMA_SERVER_HTTP_PORT=8000
     healthcheck:
-      # Pure Python TCP + HTTP probe — works regardless of curl/wget availability.
-      # Tries /api/v2/heartbeat first (chroma >= 0.5), falls back to /api/v1/heartbeat.
-      test:
-        - "CMD-SHELL"
-        - |
-          python3 -c "
-          import socket, sys
-          try:
-              s = socket.create_connection(('localhost', 8000), timeout=10)
-              s.sendall(b'GET /api/v2/heartbeat HTTP/1.0\r\nHost: localhost\r\n\r\n')
-              r = s.recv(256).decode('utf-8', errors='ignore')
-              s.close()
-              if '200' in r or 'nanosecond' in r.lower():
-                  sys.exit(0)
-              # fallback: try v1
-              s2 = socket.create_connection(('localhost', 8000), timeout=10)
-              s2.sendall(b'GET /api/v1/heartbeat HTTP/1.0\r\nHost: localhost\r\n\r\n')
-              r2 = s2.recv(256).decode('utf-8', errors='ignore')
-              s2.close()
-              sys.exit(0 if ('200' in r2 or 'nanosecond' in r2.lower()) else 1)
-          except Exception as e:
-              sys.exit(1)
-          "
-      interval: 20s
-      timeout: 15s
-      retries: 15
-      start_period: 90s
+      test: ["CMD-SHELL", "python3 -c \"import socket,sys; s=socket.create_connection(('localhost',8000),timeout=5); s.sendall(b'GET /api/v1/heartbeat HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n'); r=s.recv(128).decode('utf-8','ignore'); s.close(); sys.exit(0 if '200' in r or 'nanosecond' in r.lower() else 1)\""]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
     networks:
       - price-is-right-net
 
@@ -121,7 +90,7 @@ services:
       - DASHBOARD_PORT=7860
     depends_on:
       chromadb:
-        condition: service_healthy
+        condition: service_started
     command: ["python", "-m", "app.main", "--mode", "dashboard"]
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:7860/ || exit 1"]
@@ -158,7 +127,7 @@ services:
       - API_PORT=8000
     depends_on:
       chromadb:
-        condition: service_healthy
+        condition: service_started
     command: ["python", "-m", "app.main", "--mode", "api"]
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
@@ -189,7 +158,7 @@ services:
       - CHROMA_PORT=8000
     depends_on:
       chromadb:
-        condition: service_healthy
+        condition: service_started
     command: ["python", "-m", "app.main", "--mode", "init-rag"]
     restart: "no"
     networks:

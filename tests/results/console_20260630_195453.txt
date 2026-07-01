@@ -1,0 +1,269 @@
+[1m============================= test session starts ==============================[0m
+[1mcollecting ... [0mcollected 36 items
+
+tests/test_core.py::TestDealModel::test_deal_creation_valid [32mPASSED[0m[32m       [  2%][0m
+tests/test_core.py::TestDealModel::test_deal_fields_are_accessible [32mPASSED[0m[32m [  5%][0m
+tests/test_core.py::TestDealModel::test_deal_missing_price_raises [32mPASSED[0m[32m [  8%][0m
+tests/test_core.py::TestDealModel::test_deal_missing_url_raises [32mPASSED[0m[32m   [ 11%][0m
+tests/test_core.py::TestDealModel::test_deal_price_large [32mPASSED[0m[32m          [ 13%][0m
+tests/test_core.py::TestDealModel::test_deal_price_zero [32mPASSED[0m[32m           [ 16%][0m
+tests/test_core.py::TestDealSelectionModel::test_deal_selection_empty [32mPASSED[0m[32m [ 19%][0m
+tests/test_core.py::TestDealSelectionModel::test_deal_selection_five_deals [32mPASSED[0m[32m [ 22%][0m
+tests/test_core.py::TestDealSelectionModel::test_deal_selection_is_iterable [32mPASSED[0m[32m [ 25%][0m
+tests/test_core.py::TestDealSelectionModel::test_deal_selection_prices_preserved [32mPASSED[0m[32m [ 27%][0m
+tests/test_core.py::TestOpportunityModel::test_opportunity_creation [32mPASSED[0m[32m [ 30%][0m
+tests/test_core.py::TestOpportunityModel::test_opportunity_deal_reference_preserved [32mPASSED[0m[32m [ 33%][0m
+tests/test_core.py::TestOpportunityModel::test_opportunity_negative_discount [32mPASSED[0m[32m [ 36%][0m
+tests/test_core.py::TestOpportunityModel::test_opportunity_zero_discount [32mPASSED[0m[32m [ 38%][0m
+tests/test_core.py::TestScrapedDeal::test_scraped_deal_describe [32mPASSED[0m[32m   [ 41%][0m
+tests/test_core.py::TestScrapedDeal::test_scraped_deal_fallback_to_summary [32mPASSED[0m[32m [ 44%][0m
+tests/test_core.py::TestScrapedDeal::test_scraped_deal_fetch [32mPASSED[0m[32m      [ 47%][0m
+tests/test_core.py::TestScrapedDeal::test_scraped_deal_init_with_content_section [32mPASSED[0m[32m [ 50%][0m
+tests/test_core.py::TestScrapedDeal::test_scraped_deal_network_failure_graceful [32mPASSED[0m[32m [ 52%][0m
+tests/test_core.py::TestScrapedDeal::test_scraped_deal_truncation [32mPASSED[0m[32m [ 55%][0m
+tests/test_core.py::TestPreprocessor::test_messages_for_contains_system_and_user [32mPASSED[0m[32m [ 58%][0m
+tests/test_core.py::TestPreprocessor::test_messages_for_user_content_matches_input [32mPASSED[0m[32m [ 61%][0m
+tests/test_core.py::TestPreprocessor::test_preprocess_calls_completion [32mPASSED[0m[32m [ 63%][0m
+tests/test_core.py::TestPreprocessor::test_preprocess_returns_non_empty_string [32mPASSED[0m[32m [ 66%][0m
+tests/test_core.py::TestPreprocessor::test_preprocessor_has_messages_for [32mPASSED[0m[32m [ 69%][0m
+tests/test_core.py::TestPreprocessor::test_preprocessor_has_model_name [32mPASSED[0m[32m [ 72%][0m
+tests/test_core.py::TestPreprocessor::test_preprocessor_instantiation [32mPASSED[0m[32m [ 75%][0m
+tests/test_core.py::TestLogUtils::test_html_for_contains_scroll_div [32mPASSED[0m[32m [ 77%][0m
+tests/test_core.py::TestLogUtils::test_html_for_default_max_lines [32mPASSED[0m[32m [ 80%][0m
+tests/test_core.py::TestLogUtils::test_html_for_empty_list [32mPASSED[0m[32m        [ 83%][0m
+tests/test_core.py::TestLogUtils::test_html_for_single_line [32mPASSED[0m[32m       [ 86%][0m
+tests/test_core.py::TestLogUtils::test_html_for_truncates_to_max_lines [32mPASSED[0m[32m [ 88%][0m
+tests/test_core.py::TestLogUtils::test_reformat_all_colors_mapped [32mPASSED[0m[32m [ 91%][0m
+tests/test_core.py::TestLogUtils::test_reformat_green_color [32mPASSED[0m[32m       [ 94%][0m
+tests/test_core.py::TestLogUtils::test_reformat_plain_text [32mPASSED[0m[32m        [ 97%][0m
+tests/test_core.py::TestLogUtils::test_reformat_red_color [32mPASSED[0m[32m         [100%][0m
+
+[32m============================== [32m[1m36 passed[0m[32m in 6.45s[0m[32m ==============================[0m
+[1m============================= test session starts ==============================[0m
+[1mcollecting ... [0mcollected 44 items
+
+tests/test_agents.py::TestBaseAgent::test_agent_color_constants_are_ansi [32mPASSED[0m[32m [  2%][0m
+tests/test_agents.py::TestBaseAgent::test_agent_color_default_white [32mPASSED[0m[32m [  4%][0m
+tests/test_agents.py::TestBaseAgent::test_agent_has_color_constants [32mPASSED[0m[32m [  6%][0m
+tests/test_agents.py::TestBaseAgent::test_agent_log_does_not_raise [32mPASSED[0m[32m [  9%][0m
+tests/test_agents.py::TestBaseAgent::test_agent_name_default_empty [32mPASSED[0m[32m [ 11%][0m
+tests/test_agents.py::TestScannerAgent::test_scan_returns_deal_selection [32mPASSED[0m[32m [ 13%][0m
+tests/test_agents.py::TestScannerAgent::test_scan_with_empty_deals [32mPASSED[0m[32m [ 15%][0m
+tests/test_agents.py::TestScannerAgent::test_scanner_has_correct_color [32mPASSED[0m[32m [ 18%][0m
+tests/test_agents.py::TestScannerAgent::test_scanner_instantiation [32mPASSED[0m[32m [ 20%][0m
+tests/test_agents.py::TestScannerAgent::test_scanner_model_name [32mPASSED[0m[32m   [ 22%][0m
+tests/test_agents.py::TestFrontierAgent::test_frontier_instantiation [32mPASSED[0m[32m [ 25%][0m
+tests/test_agents.py::TestFrontierAgent::test_frontier_model_name [32mPASSED[0m[32m [ 27%][0m
+tests/test_agents.py::TestFrontierAgent::test_frontier_price_positive [32mPASSED[0m[32m [ 29%][0m
+tests/test_agents.py::TestFrontierAgent::test_frontier_price_returns_float [32mPASSED[0m[32m [ 31%][0m
+tests/test_agents.py::TestFrontierAgent::test_frontier_uses_rag_collection [32mPASSED[0m[32m [ 34%][0m
+tests/test_agents.py::TestSpecialistAgent::test_specialist_color [32mPASSED[0m[32m  [ 36%][0m
+tests/test_agents.py::TestSpecialistAgent::test_specialist_has_modal_app_name [32mPASSED[0m[32m [ 38%][0m
+tests/test_agents.py::TestSpecialistAgent::test_specialist_instantiation [32mPASSED[0m[32m [ 40%][0m
+tests/test_agents.py::TestSpecialistAgent::test_specialist_price_positive [32mPASSED[0m[32m [ 43%][0m
+tests/test_agents.py::TestSpecialistAgent::test_specialist_price_returns_float [32mPASSED[0m[32m [ 45%][0m
+tests/test_agents.py::TestNeuralNetworkAgent::test_nn_agent_color [32mPASSED[0m[32m [ 47%][0m
+tests/test_agents.py::TestNeuralNetworkAgent::test_nn_agent_instantiation [32mPASSED[0m[32m [ 50%][0m
+tests/test_agents.py::TestNeuralNetworkAgent::test_nn_price_positive [32mPASSED[0m[32m [ 52%][0m
+tests/test_agents.py::TestNeuralNetworkAgent::test_nn_price_returns_float [32mPASSED[0m[32m [ 54%][0m
+tests/test_agents.py::TestEnsembleAgent::test_ensemble_has_three_sub_agents [32mPASSED[0m[32m [ 56%][0m
+tests/test_agents.py::TestEnsembleAgent::test_ensemble_instantiation [32mPASSED[0m[32m [ 59%][0m
+tests/test_agents.py::TestEnsembleAgent::test_ensemble_price_positive [32mPASSED[0m[32m [ 61%][0m
+tests/test_agents.py::TestEnsembleAgent::test_ensemble_price_weighted_average [32mPASSED[0m[32m [ 63%][0m
+tests/test_agents.py::TestEnsembleAgent::test_ensemble_weights_sum_to_one [32mPASSED[0m[32m [ 65%][0m
+tests/test_agents.py::TestMessagingAgent::test_messaging_agent_color [32mPASSED[0m[32m [ 68%][0m
+tests/test_agents.py::TestMessagingAgent::test_messaging_agent_has_claude_model [32mPASSED[0m[32m [ 70%][0m
+tests/test_agents.py::TestMessagingAgent::test_messaging_agent_instantiation [32mPASSED[0m[32m [ 72%][0m
+tests/test_agents.py::TestMessagingAgent::test_notify_uses_correct_signature [32mPASSED[0m[32m [ 75%][0m
+tests/test_agents.py::TestMessagingAgent::test_push_handles_network_error_gracefully [32mPASSED[0m[32m [ 77%][0m
+tests/test_agents.py::TestMessagingAgent::test_push_no_credentials_returns_false [32mPASSED[0m[32m [ 79%][0m
+tests/test_agents.py::TestMessagingAgent::test_push_with_credentials_calls_api [32mPASSED[0m[32m [ 81%][0m
+tests/test_agents.py::TestPlanningAgent::test_plan_returns_none_below_threshold [32mPASSED[0m[32m [ 84%][0m
+tests/test_agents.py::TestPlanningAgent::test_plan_returns_opportunity_above_threshold [32mPASSED[0m[32m [ 86%][0m
+tests/test_agents.py::TestPlanningAgent::test_planning_agent_color [32mPASSED[0m[32m [ 88%][0m
+tests/test_agents.py::TestPlanningAgent::test_planning_agent_deal_threshold [32mPASSED[0m[32m [ 90%][0m
+tests/test_agents.py::TestPlanningAgent::test_planning_agent_has_three_sub_agents [32mPASSED[0m[32m [ 93%][0m
+tests/test_agents.py::TestPlanningAgent::test_planning_agent_instantiation [32mPASSED[0m[32m [ 95%][0m
+tests/test_agents.py::TestPlanningAgent::test_run_calculates_discount_correctly [32mPASSED[0m[32m [ 97%][0m
+tests/test_agents.py::TestPlanningAgent::test_run_returns_opportunity [32mPASSED[0m[32m [100%][0m
+
+[32m============================= [32m[1m44 passed[0m[32m in 46.81s[0m[32m ==============================[0m
+[1m============================= test session starts ==============================[0m
+[1mcollecting ... [0mcollected 25 items
+
+tests/test_integration.py::TestDealAgentFramework::test_framework_has_agent [31mFAILED[0m[31m [  4%][0m
+tests/test_integration.py::TestDealAgentFramework::test_framework_has_memory [31mFAILED[0m[31m [  8%][0m
+tests/test_integration.py::TestDealAgentFramework::test_framework_instantiation [31mFAILED[0m[31m [ 12%][0m
+tests/test_integration.py::TestDealAgentFramework::test_framework_memory_persists_across_runs [31mFAILED[0m[31m [ 16%][0m
+tests/test_integration.py::TestDealAgentFramework::test_run_appends_to_memory [31mFAILED[0m[31m [ 20%][0m
+tests/test_integration.py::TestDealAgentFramework::test_run_returns_opportunity_or_none [31mFAILED[0m[31m [ 24%][0m
+tests/test_integration.py::TestAPIEndpoints::test_api_docs_accessible [32mPASSED[0m[31m [ 28%][0m
+tests/test_integration.py::TestAPIEndpoints::test_cors_headers_present [32mPASSED[0m[31m [ 32%][0m
+tests/test_integration.py::TestAPIEndpoints::test_health_endpoint_json_structure [32mPASSED[0m[31m [ 36%][0m
+tests/test_integration.py::TestAPIEndpoints::test_health_endpoint_returns_200 [32mPASSED[0m[31m [ 40%][0m
+tests/test_integration.py::TestAPIEndpoints::test_memory_endpoint_returns_list [32mPASSED[0m[31m [ 44%][0m
+tests/test_integration.py::TestAPIEndpoints::test_openapi_schema_accessible [32mPASSED[0m[31m [ 48%][0m
+tests/test_integration.py::TestAPIEndpoints::test_price_endpoint_with_description [31mFAILED[0m[31m [ 52%][0m
+tests/test_integration.py::TestAPIEndpoints::test_root_endpoint_returns_200 [31mFAILED[0m[31m [ 56%][0m
+tests/test_integration.py::TestAPIEndpoints::test_run_endpoint_exists [32mPASSED[0m[31m [ 60%][0m
+tests/test_integration.py::TestDeepNeuralNetwork::test_dnn_forward_pass_shape [32mPASSED[0m[31m [ 64%][0m
+tests/test_integration.py::TestDeepNeuralNetwork::test_dnn_inference_wrapper [31mFAILED[0m[31m [ 68%][0m
+tests/test_integration.py::TestDeepNeuralNetwork::test_dnn_instantiation [32mPASSED[0m[31m [ 72%][0m
+tests/test_integration.py::TestDeepNeuralNetwork::test_dnn_output_is_finite [32mPASSED[0m[31m [ 76%][0m
+tests/test_integration.py::TestDeepNeuralNetwork::test_dnn_residual_blocks_count [32mPASSED[0m[31m [ 80%][0m
+tests/test_integration.py::TestDeepNeuralNetwork::test_dnn_single_sample [32mPASSED[0m[31m [ 84%][0m
+tests/test_integration.py::TestRAGDatabase::test_rag_has_collection [32mPASSED[0m[31m [ 88%][0m
+tests/test_integration.py::TestRAGDatabase::test_rag_instantiation [32mPASSED[0m[31m [ 92%][0m
+tests/test_integration.py::TestRAGDatabase::test_rag_query_empty_returns_list [32mPASSED[0m[31m [ 96%][0m
+tests/test_integration.py::TestRAGDatabase::test_rag_query_returns_results [32mPASSED[0m[31m [100%][0m
+
+=================================== FAILURES ===================================
+[31m[1m_______________ TestDealAgentFramework.test_framework_has_agent ________________[0m
+[1m[31mtests/test_integration.py[0m:39: in test_framework_has_agent
+    [0mfw = [96mself[39;49;00m._make_framework()[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_integration.py[0m:21: in _make_framework
+    [0m[94mwith[39;49;00m patch([33m"[39;49;00m[33mapp.core.deal_agent_framework.chromadb[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_chroma, \
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1458: in __enter__
+    [0moriginal, local = [96mself[39;49;00m.get_original()[90m[39;49;00m
+                      ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1431: in get_original
+    [0m[94mraise[39;49;00m [96mAttributeError[39;49;00m([90m[39;49;00m
+[1m[31mE   AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/priceisrightcapstone/app/core/deal_agent_framework.py'> does not have the attribute 'SentenceTransformer'[0m
+[31m[1m_______________ TestDealAgentFramework.test_framework_has_memory _______________[0m
+[1m[31mtests/test_integration.py[0m:43: in test_framework_has_memory
+    [0mfw = [96mself[39;49;00m._make_framework()[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_integration.py[0m:21: in _make_framework
+    [0m[94mwith[39;49;00m patch([33m"[39;49;00m[33mapp.core.deal_agent_framework.chromadb[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_chroma, \
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1458: in __enter__
+    [0moriginal, local = [96mself[39;49;00m.get_original()[90m[39;49;00m
+                      ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1431: in get_original
+    [0m[94mraise[39;49;00m [96mAttributeError[39;49;00m([90m[39;49;00m
+[1m[31mE   AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/priceisrightcapstone/app/core/deal_agent_framework.py'> does not have the attribute 'SentenceTransformer'[0m
+[31m[1m_____________ TestDealAgentFramework.test_framework_instantiation ______________[0m
+[1m[31mtests/test_integration.py[0m:35: in test_framework_instantiation
+    [0mfw = [96mself[39;49;00m._make_framework()[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_integration.py[0m:21: in _make_framework
+    [0m[94mwith[39;49;00m patch([33m"[39;49;00m[33mapp.core.deal_agent_framework.chromadb[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_chroma, \
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1458: in __enter__
+    [0moriginal, local = [96mself[39;49;00m.get_original()[90m[39;49;00m
+                      ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1431: in get_original
+    [0m[94mraise[39;49;00m [96mAttributeError[39;49;00m([90m[39;49;00m
+[1m[31mE   AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/priceisrightcapstone/app/core/deal_agent_framework.py'> does not have the attribute 'SentenceTransformer'[0m
+[31m[1m______ TestDealAgentFramework.test_framework_memory_persists_across_runs _______[0m
+[1m[31mtests/test_integration.py[0m:75: in test_framework_memory_persists_across_runs
+    [0mfw = [96mself[39;49;00m._make_framework()[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_integration.py[0m:21: in _make_framework
+    [0m[94mwith[39;49;00m patch([33m"[39;49;00m[33mapp.core.deal_agent_framework.chromadb[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_chroma, \
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1458: in __enter__
+    [0moriginal, local = [96mself[39;49;00m.get_original()[90m[39;49;00m
+                      ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1431: in get_original
+    [0m[94mraise[39;49;00m [96mAttributeError[39;49;00m([90m[39;49;00m
+[1m[31mE   AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/priceisrightcapstone/app/core/deal_agent_framework.py'> does not have the attribute 'SentenceTransformer'[0m
+[31m[1m______________ TestDealAgentFramework.test_run_appends_to_memory _______________[0m
+[1m[31mtests/test_integration.py[0m:59: in test_run_appends_to_memory
+    [0mfw = [96mself[39;49;00m._make_framework()[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_integration.py[0m:21: in _make_framework
+    [0m[94mwith[39;49;00m patch([33m"[39;49;00m[33mapp.core.deal_agent_framework.chromadb[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_chroma, \
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1458: in __enter__
+    [0moriginal, local = [96mself[39;49;00m.get_original()[90m[39;49;00m
+                      ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1431: in get_original
+    [0m[94mraise[39;49;00m [96mAttributeError[39;49;00m([90m[39;49;00m
+[1m[31mE   AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/priceisrightcapstone/app/core/deal_agent_framework.py'> does not have the attribute 'SentenceTransformer'[0m
+[31m[1m_________ TestDealAgentFramework.test_run_returns_opportunity_or_none __________[0m
+[1m[31mtests/test_integration.py[0m:49: in test_run_returns_opportunity_or_none
+    [0mfw = [96mself[39;49;00m._make_framework()[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_integration.py[0m:21: in _make_framework
+    [0m[94mwith[39;49;00m patch([33m"[39;49;00m[33mapp.core.deal_agent_framework.chromadb[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_chroma, \
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1458: in __enter__
+    [0moriginal, local = [96mself[39;49;00m.get_original()[90m[39;49;00m
+                      ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1431: in get_original
+    [0m[94mraise[39;49;00m [96mAttributeError[39;49;00m([90m[39;49;00m
+[1m[31mE   AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/priceisrightcapstone/app/core/deal_agent_framework.py'> does not have the attribute 'SentenceTransformer'[0m
+[31m[1m____________ TestAPIEndpoints.test_price_endpoint_with_description _____________[0m
+[1m[31mtests/test_integration.py[0m:140: in test_price_endpoint_with_description
+    [0m[96mself[39;49;00m.assertIn(response.status_code, [[94m200[39;49;00m, [94m422[39;49;00m, [94m500[39;49;00m])[90m[39;49;00m
+[1m[31mE   AssertionError: 404 not found in [200, 422, 500][0m
+[31m[1m_______________ TestAPIEndpoints.test_root_endpoint_returns_200 ________________[0m
+[1m[31mtests/test_integration.py[0m:121: in test_root_endpoint_returns_200
+    [0m[96mself[39;49;00m.assertEqual(response.status_code, [94m200[39;49;00m)[90m[39;49;00m
+[1m[31mE   AssertionError: 404 != 200[0m
+[31m[1m_______________ TestDeepNeuralNetwork.test_dnn_inference_wrapper _______________[0m
+[1m[31mtests/test_integration.py[0m:225: in test_dnn_inference_wrapper
+    [0m[94mwith[39;49;00m patch([33m"[39;49;00m[33mapp.models.deep_neural_network.SentenceTransformer[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_st, \
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1458: in __enter__
+    [0moriginal, local = [96mself[39;49;00m.get_original()[90m[39;49;00m
+                      ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m/usr/lib/python3.12/unittest/mock.py[0m:1431: in get_original
+    [0m[94mraise[39;49;00m [96mAttributeError[39;49;00m([90m[39;49;00m
+[1m[31mE   AttributeError: <module 'app.models.deep_neural_network' from '/home/ubuntu/priceisrightcapstone/app/models/deep_neural_network.py'> does not have the attribute 'SentenceTransformer'[0m
+[33m=============================== warnings summary ===============================[0m
+tests/test_integration.py::TestAPIEndpoints::test_api_docs_accessible
+  /usr/local/lib/python3.12/dist-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/test_integration.py::[1mTestDealAgentFramework::test_framework_has_agent[0m - AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/...
+[31mFAILED[0m tests/test_integration.py::[1mTestDealAgentFramework::test_framework_has_memory[0m - AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/...
+[31mFAILED[0m tests/test_integration.py::[1mTestDealAgentFramework::test_framework_instantiation[0m - AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/...
+[31mFAILED[0m tests/test_integration.py::[1mTestDealAgentFramework::test_framework_memory_persists_across_runs[0m - AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/...
+[31mFAILED[0m tests/test_integration.py::[1mTestDealAgentFramework::test_run_appends_to_memory[0m - AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/...
+[31mFAILED[0m tests/test_integration.py::[1mTestDealAgentFramework::test_run_returns_opportunity_or_none[0m - AttributeError: <module 'app.core.deal_agent_framework' from '/home/ubuntu/...
+[31mFAILED[0m tests/test_integration.py::[1mTestAPIEndpoints::test_price_endpoint_with_description[0m - AssertionError: 404 not found in [200, 422, 500]
+[31mFAILED[0m tests/test_integration.py::[1mTestAPIEndpoints::test_root_endpoint_returns_200[0m - AssertionError: 404 != 200
+[31mFAILED[0m tests/test_integration.py::[1mTestDeepNeuralNetwork::test_dnn_inference_wrapper[0m - AttributeError: <module 'app.models.deep_neural_network' from '/home/ubuntu...
+[31m============= [31m[1m9 failed[0m, [32m16 passed[0m, [33m1 warning[0m[31m in 235.04s (0:03:55)[0m[31m ==============[0m
+[1m============================= test session starts ==============================[0m
+[1mcollecting ... [0mcollected 38 items
+
+tests/test_ui.py::TestThemeModule::test_all_colour_values_valid [32mPASSED[0m[32m   [  2%][0m
+tests/test_ui.py::TestThemeModule::test_brand_has_primary_colour [32mPASSED[0m[32m  [  5%][0m
+tests/test_ui.py::TestThemeModule::test_button_text_on_orange_contrast_wcag_aa [32mPASSED[0m[32m [  7%][0m
+tests/test_ui.py::TestThemeModule::test_dark_theme_has_required_keys [32mPASSED[0m[32m [ 10%][0m
+tests/test_ui.py::TestThemeModule::test_dark_theme_id_is_dark [32mPASSED[0m[32m     [ 13%][0m
+tests/test_ui.py::TestThemeModule::test_get_agent_status_html_contains_all_7_agents [32mPASSED[0m[32m [ 15%][0m
+tests/test_ui.py::TestThemeModule::test_get_agent_status_html_contains_ready [32mPASSED[0m[32m [ 18%][0m
+tests/test_ui.py::TestThemeModule::test_get_agent_status_html_contains_scanner [32mPASSED[0m[32m [ 21%][0m
+tests/test_ui.py::TestThemeModule::test_get_agent_status_html_returns_string [32mPASSED[0m[32m [ 23%][0m
+tests/test_ui.py::TestThemeModule::test_get_css_contains_accent_colour [32mPASSED[0m[32m [ 26%][0m
+tests/test_ui.py::TestThemeModule::test_get_css_contains_important [32mPASSED[0m[32m [ 28%][0m
+tests/test_ui.py::TestThemeModule::test_get_css_dark_light_differ [32mPASSED[0m[32m [ 31%][0m
+tests/test_ui.py::TestThemeModule::test_get_css_no_fstring_artifacts [32mPASSED[0m[32m [ 34%][0m
+tests/test_ui.py::TestThemeModule::test_get_css_returns_non_empty_string [32mPASSED[0m[32m [ 36%][0m
+tests/test_ui.py::TestThemeModule::test_get_footer_html_contains_author [32mPASSED[0m[32m [ 39%][0m
+tests/test_ui.py::TestThemeModule::test_get_footer_html_returns_string [32mPASSED[0m[32m [ 42%][0m
+tests/test_ui.py::TestThemeModule::test_get_header_html_contains_pir_header_id [32mPASSED[0m[32m [ 44%][0m
+tests/test_ui.py::TestThemeModule::test_get_header_html_contains_title [32mPASSED[0m[32m [ 47%][0m
+tests/test_ui.py::TestThemeModule::test_get_header_html_returns_string [32mPASSED[0m[32m [ 50%][0m
+tests/test_ui.py::TestThemeModule::test_get_header_html_uses_accent_colour [32mPASSED[0m[32m [ 52%][0m
+tests/test_ui.py::TestThemeModule::test_light_theme_has_required_keys [32mPASSED[0m[32m [ 55%][0m
+tests/test_ui.py::TestThemeModule::test_light_theme_id_is_light [32mPASSED[0m[32m   [ 57%][0m
+tests/test_ui.py::TestThemeModule::test_primary_text_contrast_wcag_aa [32mPASSED[0m[32m [ 60%][0m
+tests/test_ui.py::TestThemeModule::test_secondary_text_contrast_wcag_aa [32mPASSED[0m[32m [ 63%][0m
+tests/test_ui.py::TestSettingsPageModule::test_build_settings_tab_callable [32mPASSED[0m[32m [ 65%][0m
+tests/test_ui.py::TestSettingsPageModule::test_masked_env_preview_returns_string [32mPASSED[0m[32m [ 68%][0m
+tests/test_ui.py::TestSettingsPageModule::test_read_env_file_returns_dict [32mPASSED[0m[32m [ 71%][0m
+tests/test_ui.py::TestSettingsPageModule::test_settings_page_imports [32mPASSED[0m[32m [ 73%][0m
+tests/test_ui.py::TestSettingsPageModule::test_status_html_empty_returns_empty [32mPASSED[0m[32m [ 76%][0m
+tests/test_ui.py::TestSettingsPageModule::test_status_html_error [32mPASSED[0m[32m  [ 78%][0m
+tests/test_ui.py::TestSettingsPageModule::test_status_html_success [32mPASSED[0m[32m [ 81%][0m
+tests/test_ui.py::TestSettingsPageModule::test_validate_field_empty_required [32mPASSED[0m[32m [ 84%][0m
+tests/test_ui.py::TestSettingsPageModule::test_validate_field_valid [32mPASSED[0m[32m [ 86%][0m
+tests/test_ui.py::TestSettingsPageModule::test_write_env_file_creates_file [32mPASSED[0m[32m [ 89%][0m
+tests/test_ui.py::TestDashboardModule::test_dashboard_class_exists [32mPASSED[0m[32m [ 92%][0m
+tests/test_ui.py::TestDashboardModule::test_dashboard_has_build_method [32mPASSED[0m[32m [ 94%][0m
+tests/test_ui.py::TestDashboardModule::test_dashboard_has_run_method [32mPASSED[0m[32m [ 97%][0m
+tests/test_ui.py::TestMainModule::test_main_module_importable [32mPASSED[0m[32m     [100%][0m
+
+[32m============================== [32m[1m38 passed[0m[32m in 6.20s[0m[32m ==============================[0m
