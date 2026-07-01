@@ -42,6 +42,7 @@
    - [Fix 3: start.sh failing on fresh clone](#fix-3----startsh-failing-on-fresh-clone)
    - [Fix 4: ChromaDB permanently unhealthy (wget)](#fix-4----chromadb-container-permanently-unhealthy-blocks-app--api-from-starting)
    - [Fix 5: ChromaDB unhealthy — wget also missing (Python TCP probe)](#fix-5----chromadb-still-unhealthy-wget-also-absent-in-many-builds)
+   - [Fix 6: `docker compose run rag-init` blocks on service_healthy](#fix-6----docker-compose-run-rag-init-blocks-on-service_healthy-cascading-failure)
 6. [Project Structure](#-project-structure)
 7. [Environment Variables Reference](#-environment-variables-reference)
 8. [Disclaimer](#-disclaimer)
@@ -413,6 +414,7 @@ The update script runs **6 steps**:
 | `scripts/stop.sh` | Stop containers | `--remove-volumes` |
 | `scripts/update.sh` | Pull latest code & redeploy (includes theme check) | `--no-cache`, `--branch`, `--skip-rag-init`, `--hard-reset` |
 | `scripts/diagnose.sh` | Pre-flight environment check | *(no options)* |
+| `scripts/rag_init_patch.sh` | Fix 6: replace `docker compose run rag-init` with `exec` | `--check`, `--help` |
 
 ### theme_patch.sh — Apply Unified Colour Scheme
 
@@ -626,6 +628,50 @@ The `chromadb_patch.sh` script runs **6 diagnostic sections**:
 ./scripts/chromadb_patch.sh             # Apply all fixes + rolling restart
 ./scripts/chromadb_patch.sh --no-restart  # Fix files only, skip restart
 ./scripts/chromadb_patch.sh --force     # Re-apply even if already patched
+```
+
+---
+
+### Fix 6 — `docker compose run rag-init` Blocks on `service_healthy` (Cascading Failure)
+
+**Error:**
+```
+Container price-is-right-chromadb Waiting
+Container price-is-right-chromadb Error  dependency chromadb failed to start
+dependency failed to start: container price-is-right-chromadb is unhealthy
+```
+
+**Observed in:** `update.sh` Step 5 and `deploy.sh` Step 6 — even after all previous ChromaDB fixes were applied.
+
+**Root cause:**
+Even though `docker-compose.yml` correctly sets `condition: service_started` for all services, `docker compose run rag-init` **re-evaluates the `depends_on` health conditions at runtime** — independently of what the compose file specifies for the long-running services. When Docker's internal healthcheck still marks ChromaDB as `unhealthy` (even though it IS responding on port 8001), `docker compose run` refuses to start the one-shot container and throws the cascading failure error.
+
+**Resolution — replace `docker compose run` with `docker compose exec`:**
+
+Instead of spawning a new container (which triggers the health check re-evaluation), the RAG init command is now executed **inside the already-running `app` container** using `docker compose exec`:
+
+```bash
+# OLD (broken) — re-evaluates depends_on health conditions:
+docker compose run --rm rag-init
+
+# NEW (fixed) — exec into the already-running app container:
+docker compose exec -T app python -m app.main --mode init-rag
+```
+
+This completely bypasses Docker's internal healthcheck gating. The `app` container is already running (it uses `service_started`), so `exec` works immediately regardless of ChromaDB's reported health status.
+
+**Files changed:**
+
+| File | Change |
+|------|--------|
+| `scripts/update.sh` | Step 5: `docker compose run --rm rag-init` → `docker compose exec -T app python -m app.main --mode init-rag` with 60 s wait loop |
+| `scripts/deploy.sh` | Step 6: Same replacement with 90 s wait loop |
+
+**Manual RAG init (if needed):**
+```bash
+docker compose exec app python -m app.main --mode init-rag
+# or
+docker compose exec app python -c "from app.core.rag_db import init_rag_db; init_rag_db()"
 ```
 
 ---

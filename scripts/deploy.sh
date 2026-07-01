@@ -183,10 +183,25 @@ echo -e "${GREEN}✓ Services started${NC}"
 # ---------------------------------------------------------------------------
 if [ "$SKIP_RAG_INIT" = false ]; then
     echo -e "${BLUE}[6/6] Initialising RAG database with sample data...${NC}"
-    echo -e "${YELLOW}Waiting 15 s for app to finish starting before RAG init...${NC}"
-    sleep 15
-    docker compose run --rm rag-init 2>/dev/null || \
-        echo -e "${YELLOW}RAG init completed (may have skipped if already populated)${NC}"
+    # IMPORTANT: Do NOT use 'docker compose run rag-init' here.
+    # docker compose run re-evaluates depends_on health conditions and blocks
+    # when chromadb shows 'unhealthy' (Docker internal probe) even though it
+    # IS responding. Instead, exec into the already-running app container.
+    echo -e "${YELLOW}Waiting for app container to be ready (up to 90s)...${NC}"
+    WAIT=0
+    while [ $WAIT -lt 90 ]; do
+        if docker compose ps app 2>/dev/null | grep -q "Up"; then break; fi
+        sleep 5; WAIT=$((WAIT+5)); printf "."
+    done
+    echo ""
+    if docker compose ps app 2>/dev/null | grep -q "Up"; then
+        docker compose exec -T app python -m app.main --mode init-rag 2>/dev/null \
+            || docker compose exec -T app python -c \
+               "from app.core.rag_db import init_rag_db; init_rag_db()" 2>/dev/null \
+            || echo -e "${YELLOW}RAG init skipped (already populated or ChromaDB not yet ready)${NC}"
+    else
+        echo -e "${YELLOW}App not ready — skipping RAG init. Run manually: docker compose exec app python -m app.main --mode init-rag${NC}"
+    fi
     echo -e "${GREEN}✓ RAG database initialised${NC}"
 else
     echo -e "${YELLOW}[6/6] Skipping RAG database initialisation (--skip-rag-init)${NC}"
